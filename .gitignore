@@ -1,0 +1,35 @@
+# === UEK SilesiaPulse — .gitignore ===
+
+# Pliki tymczasowe Excel
+~$*.xls*
+*.tmp
+*.bak
+
+# Pliki tymczasowe systemu
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Klucze API i konfiguracja wrażliwa
+.env
+config.ini
+**/api_key*
+**/secret*
+
+# Pliki Power BI tymczasowe
+*.pbix.tmp
+
+# IDE
+.vscode/
+.idea/
+
+# Logi
+*.log
