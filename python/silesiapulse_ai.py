@@ -39,8 +39,8 @@ def czytaj_config(wb):
     Czyta konfigurację z ukrytego arkusza Config.
     Struktura arkusza Config:
         A1: ANTHROPIC_API_KEY    B1: sk-ant-...
-        A2: MODEL                B2: claude-sonnet-4-20250514
-        A3: MAX_TOKENS           B3: 300
+        A2: MODEL                B2: claude-sonnet-4-6
+        A3: MAX_TOKENS           B3: 600
         A4: DAYS_BACK            B4: [wartość z suwaka, np. 30]
     """
     ws_config = wb.sheets['Config']
