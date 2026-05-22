@@ -177,7 +177,7 @@ Napisz zwięzły komentarz analityczny (max 150 słów) który:
 3. Wskazuje które spółki śląskie zareagowały najmocniej
 4. Formułuje krótką rekomendację dla regionalnego inwestora
 
-Pisz po polsku, konkretnie, bez zbędnych wstępów."""
+Pisz po polsku, konkretnie, bez zbędnych wstępów. Bez formatowania markdown, bez gwiazdek, bez nagłówków — tylko czysty tekst z podziałem na akapity."""
 
     return prompt
 
