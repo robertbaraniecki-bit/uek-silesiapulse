@@ -186,14 +186,16 @@ def buduj_prompt_dzienny(wiersz):
     Buduje prompt dla komentarza dziennego (kolumna Komentarz_AI w qry_MASTER).
     Jeden wiersz danych — krótki, zwięzły komentarz.
     """
-    prompt = f"""Analityk ryzyka geopolitycznego. Data: {wiersz['Data'].strftime('%Y-%m-%d')}.
+    prompt = f"""Jesteś analitykiem ryzyka geopolitycznego. Data analizy: {wiersz['Data'].strftime('%Y-%m-%d')}.
 
 Dane dzienne:
 GPR Global: {wiersz['GPR']:.1f} | GPRC_POL (udział medialny PL): {wiersz['GPRC_POL']:.4f}
 VIX: {wiersz['VIX']:.2f} | USD/PLN: {wiersz['USD_PLN']:.4f} | EUR/PLN: {wiersz['EUR_PLN']:.4f}
 WIG20: {wiersz['WIG20']:.1f} | JSW: {wiersz['JSW']:.2f} | KGHM: {wiersz['KGHM']:.2f} | PKN: {wiersz['PKN']:.2f}
 
-Napisz 1-2 zdania komentarza dla regionalnego inwestora śląskiego. Max 50 słów. Po polsku."""
+Napisz dokładnie 2 zdania komentarza dla regionalnego inwestora śląskiego.
+Zasady: bez tytułów, bez nagłówków, bez formatowania markdown, bez gwiazdek.
+Tylko czysty tekst. Maksymalnie 50 słów łącznie. Po polsku."""
 
     return prompt
 
@@ -261,9 +263,10 @@ def zapisz_komentarze_dzienne(wb, df, df_okno, config):
     wiersze_do_przetworzenia = 0
     wiersze_przetworzone = 0
     
-    for i, row in df_okno.iterrows():
+    for excel_row_0based, (i, row) in enumerate(df_okno.iterrows()):
         # Numer wiersza w Excelu (nagłówek w wierszu 1, dane od wiersza 2)
-        excel_row = i + 2
+        # WAŻNE: używamy pozycji w df_pelny, nie indeksu DataFrame po filtrowaniu
+        excel_row = df_pelny.index.get_loc(i) + 2
         
         # Sprawdź czy komentarz już istnieje (logika przyrostowa)
         istniejacy = ws_master.range((excel_row, col_letter_offset)).value
