@@ -266,7 +266,7 @@ def zapisz_komentarze_dzienne(wb, df, df_okno, config):
     for excel_row_0based, (i, row) in enumerate(df_okno.iterrows()):
         # Numer wiersza w Excelu (nagłówek w wierszu 1, dane od wiersza 2)
         # WAŻNE: używamy pozycji w df_pelny, nie indeksu DataFrame po filtrowaniu
-        excel_row = df.index.get_loc(i) + 2
+        excel_row = df_pelny.index.get_loc(i) + 2
         
         # Sprawdź czy komentarz już istnieje (logika przyrostowa)
         istniejacy = ws_master.range((excel_row, col_letter_offset)).value
