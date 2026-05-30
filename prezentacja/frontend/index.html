@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projekt UEK 2026 · Robert Baraniecki</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0e17;
+    --surface:   #111827;
+    --border:    #1e2d45;
+    --amber:     #f59e0b;
+    --amber-dim: #92610a;
+    --blue:      #3b82f6;
+    --blue-dim:  #1e3a5f;
+    --green:     #10b981;
+    --red:       #ef4444;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --accent:    #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2.5rem;
+    background: rgba(10,14,23,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: .85rem; letter-spacing: .15em;
+    text-transform: uppercase; color: var(--amber);
+  }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a {
+    font-size: .8rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); text-decoration: none;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-links a.active { color: var(--amber); }
+
+  /* ── IMPULS SECTION ── */
+  #impuls { position: relative; overflow: hidden; }
+
+  .impuls-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2rem; margin-top: 2rem;
+  }
+
+  .timeline {
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .tl-item {
+    display: grid; grid-template-columns: 90px 1fr;
+    gap: 1rem; align-items: start;
+    opacity: 0; transform: translateX(-16px);
+    transition: opacity .45s, transform .45s;
+  }
+  .tl-item.visible { opacity: 1; transform: translateX(0); }
+
+  .tl-date-col { display: flex; flex-direction: column; align-items: flex-end; }
+  .tl-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .68rem; color: var(--amber);
+    text-align: right; line-height: 1.3;
+    padding-top: .2rem;
+  }
+  .tl-vline {
+    width: 1px; flex: 1; min-height: 28px;
+    background: var(--border); margin: 4px auto 0;
+  }
+  .tl-item:last-child .tl-vline { display: none; }
+
+  .tl-content { padding-bottom: 1.5rem; }
+  .tl-dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; margin-right: .5rem;
+    vertical-align: middle;
+  }
+  .tl-title {
+    font-family: 'Syne', sans-serif;
+    font-size: .95rem; font-weight: 700; margin-bottom: .3rem;
+  }
+  .tl-desc { font-size: .8rem; color: var(--muted); line-height: 1.6; }
+
+  .impuls-right { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .analysis-card {
+    border: 1px solid var(--border); border-left: 3px solid;
+    padding: 1.4rem; background: rgba(255,255,255,.02);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity .4s, transform .4s;
+  }
+  .analysis-card.visible { opacity: 1; transform: translateY(0); }
+  .analysis-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: .9rem; font-weight: 700; margin-bottom: .7rem;
+  }
+  .analysis-card-body {
+    font-size: .82rem; color: var(--muted); line-height: 1.7;
+  }
+  .analysis-card-body strong { color: var(--text); font-weight: 500; }
+
+  /* kontekst card */
+  .context-banner {
+    background: rgba(245,158,11,.06);
+    border: 1px solid var(--amber-dim);
+    border-left: 3px solid var(--amber);
+    padding: 1.2rem 1.5rem;
+    margin-top: 2.5rem;
+    font-size: .82rem; color: var(--muted); line-height: 1.7;
+  }
+  .context-banner strong { color: var(--amber); font-weight: 500; }
+
+  /* ── SECTIONS ── */
+  section { min-height: 100vh; padding: 7rem 2.5rem 4rem; }
+
+  /* ── HERO ── */
+  #hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .hero-glow {
+    position: absolute; top: 20%; right: 10%;
+    width: 400px; height: 400px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,158,11,.08) 0%, transparent 70%);
+    z-index: 0;
+  }
+
+  .hero-left { position: relative; z-index: 1; }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: .5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem; color: var(--amber);
+    border: 1px solid var(--amber-dim);
+    padding: .3rem .8rem; border-radius: 2px;
+    margin-bottom: 1.5rem;
+    letter-spacing: .05em;
+  }
+  .hero-tag::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--amber);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: .3; }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3.5vw, 3rem);
+    font-weight: 800; line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+  h1 span { color: var(--amber); }
+
+  .hero-sub {
+    font-size: .95rem; color: var(--muted); line-height: 1.7;
+    max-width: 480px; margin-bottom: 2rem;
+  }
+
+  .hero-meta {
+    display: flex; gap: 2rem; flex-wrap: wrap;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: .2rem; }
+  .meta-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .65rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .meta-value { font-size: .85rem; color: var(--text); font-weight: 500; }
+
+  /* hero right — pytanie badawcze */
+  .hero-right {
+    position: relative; z-index: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--amber);
+    padding: 2rem;
+  }
+  .card-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .65rem; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--amber);
+    margin-bottom: 1rem;
+  }
+  .question {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.15rem; font-weight: 600;
+    line-height: 1.5; color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+  .significance {
+    font-size: .85rem; color: var(--muted); line-height: 1.7;
+    border-left: 2px solid var(--amber-dim); padding-left: 1rem;
+  }
+
+  /* ── CHAIN ── */
+  #lancuch {
+    background: var(--surface);
+    position: relative;
+  }
+  #lancuch::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, var(--bg) 0%, transparent 10%, transparent 90%, var(--bg) 100%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .section-header {
+    position: relative; z-index: 1;
+    margin-bottom: 3rem;
+  }
+  .section-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .7rem; color: var(--amber); letter-spacing: .1em;
+    margin-bottom: .5rem;
+  }
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    font-weight: 700;
+  }
+
+  .chain-wrapper {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; gap: 0;
+    max-width: 780px; margin: 0 auto;
+  }
+
+  .chain-step {
+    display: grid; grid-template-columns: 56px 1fr;
+    gap: 1.5rem; align-items: start;
+    opacity: 0; transform: translateX(-20px);
+    transition: opacity .5s, transform .5s;
+  }
+  .chain-step.visible { opacity: 1; transform: translateX(0); }
+
+  .chain-icon-col {
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .chain-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    border: 2px solid;
+    flex-shrink: 0;
+  }
+  .chain-line {
+    width: 2px; flex: 1; min-height: 40px;
+    background: linear-gradient(180deg, var(--border) 0%, transparent 100%);
+    margin: 4px 0;
+  }
+  .chain-step:last-child .chain-line { display: none; }
+
+  .chain-content { padding: .25rem 0 2rem; }
+  .chain-trigger {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .68rem; letter-spacing: .08em;
+    text-transform: uppercase; margin-bottom: .4rem;
+  }
+  .chain-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem; font-weight: 700; margin-bottom: .4rem;
+  }
+  .chain-desc { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+  .chain-indicators {
+    display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem;
+  }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .68rem; padding: .2rem .6rem;
+    border-radius: 2px; border: 1px solid;
+  }
+
+  /* color variants */
+  .c-red   { color: #ef4444; border-color: #7f1d1d; background: rgba(239,68,68,.07); }
+  .c-amber { color: var(--amber); border-color: var(--amber-dim); background: rgba(245,158,11,.07); }
+  .c-blue  { color: var(--blue); border-color: var(--blue-dim); background: rgba(59,130,246,.07); }
+  .c-green { color: var(--green); border-color: #064e3b; background: rgba(16,185,129,.07); }
+  .c-muted { color: var(--muted); border-color: var(--border); }
+
+  .icon-red   { border-color: #7f1d1d; background: rgba(239,68,68,.1); }
+  .icon-amber { border-color: var(--amber-dim); background: rgba(245,158,11,.1); }
+  .icon-blue  { border-color: var(--blue-dim); background: rgba(59,130,246,.1); }
+  .icon-green { border-color: #064e3b; background: rgba(16,185,129,.1); }
+
+  /* ── PIPELINE ── */
+  #pipeline { position: relative; overflow: hidden; }
+
+  .pipeline-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    position: relative;
+    margin-top: 2rem;
+  }
+
+  .pipe-col {
+    display: flex; flex-direction: column;
+    opacity: 0; transform: translateY(16px);
+    transition: opacity .4s, transform .4s;
+  }
+  .pipe-col.visible { opacity: 1; transform: translateY(0); }
+
+  .pipe-header {
+    padding: 1.2rem 1rem;
+    border-top: 3px solid;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    min-height: 90px;
+  }
+  .pipe-col:last-child .pipe-header { border-right: none; }
+  .pipe-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .62rem; letter-spacing: .1em;
+    text-transform: uppercase; margin-bottom: .4rem;
+  }
+  .pipe-name {
+    font-family: 'Syne', sans-serif;
+    font-size: .9rem; font-weight: 700; line-height: 1.3;
+  }
+
+  .pipe-items {
+    flex: 1;
+    border-right: 1px solid var(--border);
+    padding: .75rem;
+    display: flex; flex-direction: column; gap: .4rem;
+  }
+  .pipe-col:last-child .pipe-items { border-right: none; }
+
+  .pipe-item {
+    font-size: .78rem; padding: .5rem .7rem;
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    line-height: 1.4;
+    cursor: default;
+    transition: background .2s, border-color .2s;
+  }
+  .pipe-item:hover {
+    background: rgba(255,255,255,.05);
+    border-color: var(--muted);
+  }
+  .pipe-item-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .62rem; color: var(--muted);
+    display: block; margin-bottom: .15rem;
+  }
+
+  .pipe-status {
+    padding: .75rem 1rem;
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .68rem; letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .pipe-col:last-child .pipe-status { border-right: none; }
+  .status-done  { color: var(--green); }
+  .status-next  { color: var(--amber); }
+  .status-plan  { color: var(--muted); }
+
+  /* arrow between cols */
+  .pipe-arrow {
+    position: absolute; top: 42px;
+    font-size: .9rem; color: var(--muted);
+    z-index: 2;
+    transform: translateX(-50%);
+  }
+
+  /* ── DANE ── */
+  #dane { background: var(--surface); }
+
+  .sources-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .source-card {
+    border: 1px solid var(--border);
+    border-left: 3px solid;
+    padding: 1.5rem;
+    background: rgba(255,255,255,.02);
+    opacity: 0; transform: translateY(12px);
+    transition: opacity .4s, transform .4s;
+  }
+  .source-card.visible { opacity: 1; transform: translateY(0); }
+
+  .source-top {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 1rem;
+  }
+  .source-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem; font-weight: 700;
+  }
+  .source-mode {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .65rem; padding: .2rem .6rem;
+    border-radius: 2px; border: 1px solid;
+  }
+  .source-what {
+    font-size: .82rem; color: var(--muted);
+    margin-bottom: .8rem; line-height: 1.6;
+  }
+  .source-arg {
+    font-size: .78rem; color: var(--text);
+    background: rgba(0,0,0,.3); padding: .8rem 1rem;
+    border-left: 2px solid; font-style: italic;
+    line-height: 1.6;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 2rem 2.5rem;
+    display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .footer-left {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem; color: var(--muted);
+  }
+  .footer-dates {
+    display: flex; gap: 2rem;
+  }
+  .footer-date { display: flex; flex-direction: column; gap: .15rem; }
+  .footer-date-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .6rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .footer-date-val {
+    font-family: 'Syne', sans-serif;
+    font-size: .85rem; font-weight: 600;
+  }
+  .date-consult { color: var(--amber); }
+  .date-defense { color: var(--green); }
+
+  /* ── SCROLL DOTS ── */
+  .scroll-nav {
+    position: fixed; right: 1.5rem; top: 50%;
+    transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: .6rem;
+    z-index: 200;
+  }
+  .scroll-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--border); cursor: pointer;
+    transition: background .2s, transform .2s;
+  }
+  .scroll-dot.active {
+    background: var(--amber);
+    transform: scale(1.5);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    #hero { grid-template-columns: 1fr; }
+    .pipeline-grid { grid-template-columns: 1fr 1fr; }
+    .sources-grid { grid-template-columns: 1fr; }
+    nav { padding: 1rem 1.2rem; }
+    section { padding: 6rem 1.2rem 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">Geo&thinsp;Risk · UEK&thinsp;2026</div>
+  <div class="nav-links">
+    <a href="#hero">Intro</a>
+    <a href="#lancuch">Łańcuch</a>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#dane">Dane</a>
+    <a href="#impuls" style="color:var(--amber)">Impuls</a>
+  </div>
+</nav>
+
+<!-- SCROLL DOTS -->
+<div class="scroll-nav">
+  <div class="scroll-dot active" onclick="scrollTo('#hero')"></div>
+  <div class="scroll-dot" onclick="scrollTo('#lancuch')"></div>
+  <div class="scroll-dot" onclick="scrollTo('#pipeline')"></div>
+  <div class="scroll-dot" onclick="scrollTo('#dane')"></div>
+  <div class="scroll-dot" onclick="scrollTo('#impuls')"></div>
+</div>
+
+<!-- ════════════════════════════════ HERO ════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-left">
+    <div class="hero-tag">Projekt końcowy UEK Katowice · 2026</div>
+
+    <h1>
+      Dynamiczna analiza<br>
+      <span>czynników ryzyka</span><br>
+      geopolitycznego
+    </h1>
+
+    <p class="hero-sub">
+      Zautomatyzowany pipeline danych badający wpływ globalnych wydarzeń
+      geopolitycznych na kluczowe wskaźniki finansowe Śląska —
+      od GPR Index po notowania JSW, KGHM i PKN Orlen.
+    </p>
+
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">Student</span>
+        <span class="meta-value">Robert Baraniecki</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Promotor</span>
+        <span class="meta-value">dr hab. K. Kania, prof. UE</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Uczelnia</span>
+        <span class="meta-value">UEK Katowice</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="card-label">// Pytanie badawcze</div>
+    <div class="question">
+      Jak globalne wydarzenia geopolityczne przekładają się
+      na wskaźniki finansowe istotne dla gospodarki Śląska?
+    </div>
+    <div class="significance">
+      Region Śląski — przemysł ciężki wrażliwy na ceny surowców,
+      bliskość granicy wschodniej, znaczący udział sektora energetycznego.
+      Wyniki projektu mogą być praktycznie stosowane przez inwestorów
+      regionalnych oraz analityków sektora publicznego.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════ ŁAŃCUCH ════════════════════════════ -->
+<section id="lancuch">
+  <div class="section-header">
+    <div class="section-num">// 01 · Mechanizm transmisji</div>
+    <h2>Łańcuch przyczynowo‑skutkowy</h2>
+  </div>
+
+  <div class="chain-wrapper">
+
+    <div class="chain-step">
+      <div class="chain-icon-col">
+        <div class="chain-icon icon-red">⚡</div>
+        <div class="chain-line"></div>
+      </div>
+      <div class="chain-content">
+        <div class="chain-trigger c-red">Impuls · Zdarzenie</div>
+        <div class="chain-title">Wydarzenie geopolityczne</div>
+        <div class="chain-desc">Konflikt zbrojny, sankcje gospodarcze, napięcia dyplomatyczne — czynnik inicjujący reakcję rynkową.</div>
+        <div class="chain-indicators">
+          <span class="chip c-red">GPR Index ↑</span>
+          <span class="chip c-red">GPRC_POL ↑</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chain-step">
+      <div class="chain-icon-col">
+        <div class="chain-icon icon-amber">📡</div>
+        <div class="chain-line"></div>
+      </div>
+      <div class="chain-content">
+        <div class="chain-trigger c-amber">Warstwa globalna</div>
+        <div class="chain-title">Reakcja rynków globalnych</div>
+        <div class="chain-desc">Wzrost awersji do ryzyka globalnego — inwestorzy uciekają w bezpieczne aktywa, dolar się umacnia.</div>
+        <div class="chain-indicators">
+          <span class="chip c-amber">VIX ↑</span>
+          <span class="chip c-amber">USD/PLN ↑</span>
+          <span class="chip c-amber">EUR/PLN ↑</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chain-step">
+      <div class="chain-icon-col">
+        <div class="chain-icon icon-blue">🏭</div>
+        <div class="chain-line"></div>
+      </div>
+      <div class="chain-content">
+        <div class="chain-trigger c-blue">Warstwa surowcowa</div>
+        <div class="chain-title">Reakcja spółek śląskich</div>
+        <div class="chain-desc">Ceny surowców zmieniają rentowność kluczowych spółek regionu — węgiel, miedź, ropa naftowa.</div>
+        <div class="chain-indicators">
+          <span class="chip c-blue">JSW</span>
+          <span class="chip c-blue">KGHM</span>
+          <span class="chip c-blue">PKN Orlen</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chain-step">
+      <div class="chain-icon-col">
+        <div class="chain-icon icon-green">📊</div>
+        <div class="chain-line"></div>
+      </div>
+      <div class="chain-content">
+        <div class="chain-trigger c-green">Warstwa rynkowa</div>
+        <div class="chain-title">Reakcja polskiego rynku</div>
+        <div class="chain-desc">Polski indeks szerokiego rynku absorbuje zmiany — barometr ogólnego sentymentu inwestycyjnego.</div>
+        <div class="chain-indicators">
+          <span class="chip c-green">WIG20 ↕</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chain-step">
+      <div class="chain-icon-col">
+        <div class="chain-icon icon-amber">🎯</div>
+        <div class="chain-line"></div>
+      </div>
+      <div class="chain-content">
+        <div class="chain-trigger c-amber">Wniosek analityczny</div>
+        <div class="chain-title">Wymierny wpływ na gospodarkę Śląska</div>
+        <div class="chain-desc">
+          Korelacja między GPR Index a zachowaniem kluczowych wskaźników finansowych regionu
+          jest mierzalna i weryfikowalna empirycznie — co stanowi podstawę praktycznych rekomendacji.
+        </div>
+        <div class="chain-indicators">
+          <span class="chip c-amber">r &gt; 0.7 (GPR ↔ VIX)</span>
+          <span class="chip c-muted">zakres 2020–2026</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════ PIPELINE ═══════════════════════════ -->
+<section id="pipeline">
+  <div class="section-header">
+    <div class="section-num">// 02 · Architektura techniczna</div>
+    <h2>Pipeline danych · Stack technologiczny</h2>
+  </div>
+
+  <div class="pipeline-grid" id="pipelineGrid">
+
+    <!-- COL 1 -->
+    <div class="pipe-col" style="transition-delay:.0s">
+      <div class="pipe-header" style="border-color:#3b82f6">
+        <div class="pipe-num c-blue">01 · Źródła</div>
+        <div class="pipe-name">Pozyskiwanie danych</div>
+      </div>
+      <div class="pipe-items">
+        <div class="pipe-item">
+          <span class="pipe-item-label">API · auto</span>
+          NBP · EUR/PLN · USD/PLN
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">API · auto</span>
+          FRED · VIX (CBOE)
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">XLS · semi-auto</span>
+          GPR Index · GPRC_POL
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">CSV · semi-auto</span>
+          Stooq · WIG20 · JSW · KGHM · PKN
+        </div>
+      </div>
+      <div class="pipe-status status-done">✓ Gotowe</div>
+    </div>
+
+    <!-- COL 2 -->
+    <div class="pipe-col" style="transition-delay:.1s">
+      <div class="pipe-header" style="border-color:#f59e0b">
+        <div class="pipe-num c-amber">02 · Transformacja</div>
+        <div class="pipe-name">Power Query M</div>
+      </div>
+      <div class="pipe-items">
+        <div class="pipe-item">
+          <span class="pipe-item-label">10 zapytań</span>
+          qry_NBP_USD · qry_NBP_EUR
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">Merge · Inner Join</span>
+          qry_NBP_Waluty · qry_WIG20
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">FillDown · LOCF</span>
+          VIX · GPR · GPRC_POL
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">Master · 1 589 wierszy</span>
+          qry_MASTER · qry_Kalendarz
+        </div>
+      </div>
+      <div class="pipe-status status-done">✓ Gotowe</div>
+    </div>
+
+    <!-- COL 3 -->
+    <div class="pipe-col" style="transition-delay:.2s">
+      <div class="pipe-header" style="border-color:#10b981">
+        <div class="pipe-num c-green">03 · Model danych</div>
+        <div class="pipe-name">Power Pivot · DAX</div>
+      </div>
+      <div class="pipe-items">
+        <div class="pipe-item">
+          <span class="pipe-item-label">Relacja 1→*</span>
+          Kalendarz ↔ qry_MASTER
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">Miara DAX</span>
+          Avg VIX 30d
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">Miara DAX</span>
+          GPR Change % · USD Trend
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">Miara DAX</span>
+          Risk Label (1 / 0 / −1)
+        </div>
+      </div>
+      <div class="pipe-status status-done">✓ Gotowe</div>
+    </div>
+
+    <!-- COL 4 -->
+    <div class="pipe-col" style="transition-delay:.3s">
+      <div class="pipe-header" style="border-color:#8b5cf6">
+        <div class="pipe-num" style="color:#8b5cf6">04 · Analityka AI</div>
+        <div class="pipe-name">Python · VBA · Claude API</div>
+      </div>
+      <div class="pipe-items">
+        <div class="pipe-item">
+          <span class="pipe-item-label">xlwings · Python</span>
+          Korelacje · regresja
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">Claude API</span>
+          Komentarz_AI — interpretacja tekstowa
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">VBA · makro</span>
+          OdswierzDane()
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">VBA · makro</span>
+          GenerujKomentarzAI()
+        </div>
+      </div>
+      <div class="pipe-status status-next">→ Następna faza</div>
+    </div>
+
+    <!-- COL 5 -->
+    <div class="pipe-col" style="transition-delay:.4s">
+      <div class="pipe-header" style="border-color:#ef4444">
+        <div class="pipe-num c-red">05 · Prezentacja</div>
+        <div class="pipe-name">Excel · Power BI</div>
+      </div>
+      <div class="pipe-items">
+        <div class="pipe-item">
+          <span class="pipe-item-label">Excel 365 · Arkusz 4</span>
+          Dynamiczny wykres (PRZESUNIĘCIE + #)
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">Power BI · Strona 1</span>
+          Dashboard przegląd — KPI · trend
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">Power BI · Strona 2</span>
+          Scatter · macierz korelacji
+        </div>
+        <div class="pipe-item">
+          <span class="pipe-item-label">Figma → Power BI</span>
+          Wireframe → implementacja
+        </div>
+      </div>
+      <div class="pipe-status status-plan">◌ Planowane</div>
+    </div>
+
+  </div>
+
+  <div class="context-banner">
+    <strong>Kontekst projektu:</strong> Projekt UEK to kompletne, samodzielne dzieło akademickie — zaprojektowane i zrealizowane jako autonomiczny projekt badawczy. Równolegle, w oparciu o zdobyte doświadczenia, powstaje osobny, bardziej rozbudowany projekt oparty na pełnej automatyzacji — <strong>Geo Pulse</strong>. Oba projekty działają niezależnie i żaden nie jest warunkiem drugiego; stanowią naturalną parę: UEK jako akademicki proof of concept idei, Geo Pulse jako jej produkcyjna kontynuacja. Podobną funkcję w środowisku finansowym pełni Terminal Bloomberg — wyspecjalizowana platforma analityki geopolitycznej i rynkowej w czasie rzeczywistym.
+  </div>
+</section>
+
+<!-- ════════════════════════════════ DANE ═══════════════════════════════ -->
+<section id="dane">
+  <div class="section-header">
+    <div class="section-num">// 03 · Źródła i argumentacja</div>
+    <h2>Dane · Ograniczenia · POC</h2>
+  </div>
+
+  <div class="sources-grid">
+
+    <div class="source-card" style="border-color:#3b82f6">
+      <div class="source-top">
+        <div class="source-name">NBP API</div>
+        <div class="source-mode c-blue" style="border-color:#1e3a5f">semi-auto · CSV</div>
+      </div>
+      <div class="source-what">EUR/PLN · USD/PLN · zakres 2020–2026 · 1 589 rekordów</div>
+      <div class="source-arg" style="border-color:#1e3a5f">
+        API NBP ma limit 367 dni na zapytanie. Dane historyczne pobierane
+        skryptem Python rok po roku i scalane w jeden plik CSV.
+        Pipeline transformacji działa automatycznie.
+      </div>
+    </div>
+
+    <div class="source-card" style="border-color:#f59e0b">
+      <div class="source-top">
+        <div class="source-name">Stooq.pl</div>
+        <div class="source-mode c-amber" style="border-color:#92610a">semi-auto · CSV</div>
+      </div>
+      <div class="source-what">WIG20 · JSW · KGHM · PKN Orlen · pełna historia notowań</div>
+      <div class="source-arg" style="border-color:#92610a">
+        Stooq stosuje zabezpieczenia anti-bot blokujące Power Query.
+        Świadome ograniczenie POC — w rozbudowanej wersji projektu
+        rozwiązane przez dedykowany kolektor Python (yfinance / pandas-datareader).
+      </div>
+    </div>
+
+    <div class="source-card" style="border-color:#10b981">
+      <div class="source-top">
+        <div class="source-name">FRED API</div>
+        <div class="source-mode c-green" style="border-color:#064e3b">automatyczny · Web</div>
+      </div>
+      <div class="source-what">VIX — CBOE Volatility Index · dane dzienne</div>
+      <div class="source-arg" style="border-color:#064e3b">
+        Luki kalendarzowe (GPW vs NYSE) uzupełniane metodą LOCF
+        (Last Observation Carried Forward / FillDown) —
+        standard w analizie szeregów czasowych finansowych.
+      </div>
+    </div>
+
+    <div class="source-card" style="border-color:#8b5cf6">
+      <div class="source-top">
+        <div class="source-name">GPR Index</div>
+        <div class="source-mode" style="color:#8b5cf6;border-color:#4c1d95;background:rgba(139,92,246,.07)">semi-auto · XLS</div>
+      </div>
+      <div class="source-what">GPR globalny · GPRC_POL · dane miesięczne od 1985</div>
+      <div class="source-arg" style="border-color:#4c1d95">
+        Caldara &amp; Iacoviello (2022) · <em>American Economic Review</em>, 112(4).
+        Wartości miesięczne propagowane na dni robocze metodą forward fill.
+        Brak danych sty–mar 2020 = granica źródłowa, nie błąd pipeline.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════ IMPULS ══════════════════════════════ -->
+<section id="impuls">
+  <div class="section-header">
+    <div class="section-num">// 04 · Geneza projektu</div>
+    <h2>Impuls · Bliski Wschód · 7 października 2023</h2>
+  </div>
+
+  <div class="impuls-grid">
+
+    <!-- TIMELINE -->
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-date-col">
+          <div class="tl-date">7 paź<br>2023</div>
+          <div class="tl-vline"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-title"><span class="tl-dot" style="background:#ef4444"></span>„Czarna Sobota"</div>
+          <div class="tl-desc">Hamas przeprowadza bezprecedensowy atak na południe Izraela — ok. 1 200 ofiar, 251 zakładników, ponad 13 tys. wystrzelonych rakiet. Największy kryzys militarny w regionie od wojny Jom Kippur (1973). GPR Index reaguje gwałtownym skokiem.</div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-date-col">
+          <div class="tl-date">paź–gru<br>2023</div>
+          <div class="tl-vline"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-title"><span class="tl-dot" style="background:#f59e0b"></span>Regionalizacja konfliktu</div>
+          <div class="tl-desc">Do konfliktu włącza się Hezbollah (Liban), ruch Huti (Jemen) atakuje statki na Morzu Czerwonym, Iran angażuje Oś Oporu. Presja na ceny ropy, zakłócenia łańcuchów dostaw. VIX oscyluje powyżej 20.</div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-date-col">
+          <div class="tl-date">2024</div>
+          <div class="tl-vline"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-title"><span class="tl-dot" style="background:#f59e0b"></span>Eskalacja i nieudana dyplomacja</div>
+          <div class="tl-desc">Izrael wkracza do Libanu (paź 2024), uderza w Syrię, ginie Nasrallah. MTS nakazuje wstrzymanie ofensywy w Rafah — Izrael ignoruje. Kolejne rundy negocjacji USA–Katar–Egipt załamują się. GPRC_POL odchyla się od globalnego GPR.</div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-date-col">
+          <div class="tl-date">sty 2025</div>
+          <div class="tl-vline"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-title"><span class="tl-dot" style="background:#3b82f6"></span>Zawieszenie broni — kruche i warunkowe</div>
+          <div class="tl-desc">15 stycznia 2025 porozumienie pośredniczone przez Katar, Egipt i USA. 48 zakładników wciąż przetrzymywanych. Konflikt strukturalnie nierozstrzygnięty — tleje dalej.</div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-date-col">
+          <div class="tl-date">lut 2026</div>
+          <div class="tl-vline"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-title"><span class="tl-dot" style="background:#f59e0b"></span>Maksymalna presja — przed wybuchem</div>
+          <div class="tl-desc">USA gromadzą siły w regionie. Iran tłumi protesty. Negocjacje nuklearne w Omanie bez rezultatu. ONZ przywraca sankcje mechanizmem „snapback". GPR osiąga poziomy ekstremalne.</div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-date-col">
+          <div class="tl-date" style="color:#ef4444;font-weight:700">28 lut<br>2026</div>
+          <div class="tl-vline" style="background:#ef4444"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-title"><span class="tl-dot" style="background:#ef4444"></span>Operacja „Epic Fury" / „Ryczący Lew"</div>
+          <div class="tl-desc">USA i Izrael atakują Iran. Ginie Najwyższy Przywódca Chamenei. Iran odpowiada rakietami na Izrael i bazy USA w Bahrajnie, Katarze, Kuwejcie, Jordanii — oraz zamyka Cieśninę Ormuz. Ropa +18% w tydzień. VIX 34.7. WIG20 −8.4%. <span style="color:var(--amber)">→ Szczegóły w zakładce Gazeta</span></div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-date-col">
+          <div class="tl-date">8 kwi<br>2026</div>
+          <div class="tl-vline"></div>
+        </div>
+        <div class="tl-content">
+          <div class="tl-title"><span class="tl-dot" style="background:#64748b"></span>Tymczasowy rozejm — walki trwają</div>
+          <div class="tl-desc">Rozejm USA–Iran od 8 kwietnia 2026. Liban i Irak nadal niestabilne. Negocjacje pokojowe Trumpa w toku. GPR i GPRC_POL pozostają chronicznie podwyższone — ryzyko kolejnej eskalacji strukturalne.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ANALIZA PRAWA -->
+    <div class="impuls-right">
+
+      <div class="analysis-card" style="border-color:#ef4444">
+        <div class="analysis-card-title c-red">Dlaczego ten konflikt stał się impulsem do projektu?</div>
+        <div class="analysis-card-body">
+          Wydarzenie 7 października 2023 było <strong>pierwszym w XXI w. zdarzeniem geopolitycznym</strong>,
+          które w ciągu 48 godzin wywołało jednocześnie: skok GPR Index, wzrost VIX powyżej 25,
+          umocnienie dolara i przecenę spółek energetycznych i surowcowych w regionie CEE.
+          Dla Śląska — regionu opartego na przemyśle ciężkim wrażliwym na ceny surowców —
+          był to wymierny, policzalny impuls. To pytanie stało się tytułem pracy:
+          <em>„jak globalne wydarzenia geopolityczne przekładają się na wskaźniki finansowe Śląska?"</em>
+        </div>
+      </div>
+
+      <div class="analysis-card" style="border-color:#f59e0b">
+        <div class="analysis-card-title c-amber">Dolar jako „bezpieczna przystań" — mit czy realia 2025–2026?</div>
+        <div class="analysis-card-body">
+          Tradycyjny schemat mówił: kryzys geopolityczny → ucieczka w dolara → USD/PLN rośnie.
+          Dane 2025–2026 <strong>podważają ten aksjomat</strong>. DXY spadł o 9,4% w 2025 r.
+          Goldman Sachs prognozuje USD/PLN na poziomie 3,44 zł w 2026 r.
+          Morgan Stanley celuje w EUR/USD 1,25.<br><br>
+          <strong>Przyczyny strukturalne:</strong> dług publiczny USA przekroczył 36 bln USD (100% PKB),
+          koszty obsługi długu wyprzedziły wydatki na obronę, 9 bln USD obligacji zapada w 2026 r.
+          Polityka Trumpa, cięcia Fed i dedolaryzacja BRICS zmieniają paradygmat.<br><br>
+          <strong>Wniosek analityczny dla projektu:</strong> relacja GPR → USD/PLN nie jest
+          jednostronna ani stała — wymaga empirycznej weryfikacji w danych 2020–2026,
+          co stanowi jeden z kluczowych wyników pracy.
+        </div>
+      </div>
+
+      <div class="analysis-card" style="border-color:#3b82f6">
+        <div class="analysis-card-title c-blue">Znaczenie projektu — kto może z niego skorzystać?</div>
+        <div class="analysis-card-body">
+          <strong>Inwestorzy regionalni</strong> — wczesne sygnały ostrzegawcze przed wzrostem
+          ryzyka wpływającego na portfele z ekspozycją na JSW, KGHM, PKN.<br><br>
+          <strong>Analitycy sektora publicznego</strong> — narzędzie monitorowania wpływu
+          ryzyka geopolitycznego na gospodarkę regionalną Śląska.<br><br>
+          <strong>Kierunek rozwoju</strong> — projekt UEK jest akademickim proof of concept.
+          Narzędzie tej klasy — działające w czasie rzeczywistym, z pełną automatyzacją
+          i interfejsem analitycznym — pełni rolę zbliżoną do wyspecjalizowanych
+          terminali finansowych, takich jak <em>Bloomberg Terminal</em>.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CROSS-NAV -->
+<div style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:1.2rem 2.5rem; display:flex; align-items:center; justify-content:space-between;">
+  <div style="font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--muted); letter-spacing:.08em; text-transform:uppercase;">
+    Dokumentacja uzupełniająca
+  </div>
+  <a href="gazeta.html" target="_blank"
+     style="display:inline-flex; align-items:center; gap:.7rem;
+            font-family:'Syne',sans-serif; font-size:.85rem; font-weight:700;
+            color:var(--amber); border:1px solid var(--amber-dim);
+            padding:.6rem 1.4rem; text-decoration:none;
+            transition:background .2s;"
+     onmouseover="this.style.background='rgba(245,158,11,.1)'"
+     onmouseout="this.style.background='transparent'">
+    <span>📰</span>
+    Geo Monitor · Raport: Bliski Wschód 2023–2026
+    <span style="font-size:.7rem; opacity:.7">→ otwórz gazetę</span>
+  </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    Robert Baraniecki · UEK Katowice · Projekt końcowy 2026<br>
+    Promotor: dr hab. Krzysztof Kania, prof. UE
+  </div>
+  <div class="footer-dates">
+    <div class="footer-date">
+      <span class="footer-date-label">Konsultacje</span>
+      <span class="footer-date-val date-consult">30.05.2026</span>
+    </div>
+    <div class="footer-date">
+      <span class="footer-date-label">Obrona</span>
+      <span class="footer-date-val date-defense">11.07.2026</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll nav dots
+  const sections = ['hero','lancuch','pipeline','dane','impuls'];
+  const dots = document.querySelectorAll('.scroll-dot');
+
+  function scrollTo(id) {
+    document.querySelector(id).scrollIntoView({ behavior: 'smooth' });
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const idx = sections.indexOf(e.target.id);
+        dots.forEach((d,i) => d.classList.toggle('active', i === idx));
+      }
+    });
+  }, { threshold: 0.4 });
+
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+
+  const chainSteps = document.querySelectorAll('.chain-step');
+  const pipeCols   = document.querySelectorAll('.pipe-col');
+  const sourceCards = document.querySelectorAll('.source-card');
+  const tlItems    = document.querySelectorAll('.tl-item');
+  const analysisCards = document.querySelectorAll('.analysis-card');
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { threshold: 0.15 });
+
+  [...chainSteps, ...pipeCols, ...sourceCards, ...tlItems, ...analysisCards]
+    .forEach((el, i) => {
+      el.style.transitionDelay = (i * 0.07) + 's';
+      revealObserver.observe(el);
+    });
+</script>
+</body>
+</html>
+
+<!-- ════════════════════════════════ UWAGI ═══════════════════════════════ -->
+<section id="uwagi" style="min-height:auto; padding:4rem 2.5rem 3rem; background:var(--bg);">
+
+  <div style="max-width:860px; margin:0 auto;">
+
+    <div class="section-header" style="margin-bottom:2rem;">
+      <div class="section-num">// 05 · Dialog</div>
+      <h2>Uwagi i odpowiedzi</h2>
+    </div>
+
+    <!-- PROMOTOR PANEL -->
+    <div style="
+      border:1px solid var(--border);
+      border-top:3px solid #8b5cf6;
+      padding:1.5rem;
+      margin-bottom:1.5rem;
+      background:var(--surface);
+    ">
+      <div style="
+        display:flex; align-items:center; justify-content:space-between;
+        margin-bottom:1rem;
+      ">
+        <div style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.68rem; letter-spacing:.1em;
+          text-transform:uppercase; color:#8b5cf6;
+        ">// Uwagi Promotora · dr hab. K. Kania</div>
+        <div id="prom-timestamp" style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.6rem; color:var(--muted);
+        "></div>
+      </div>
+
+      <textarea id="prom-textarea" placeholder="Proszę wpisać tutaj uwagi, sugestie lub pytania do projektu…" style="
+        width:100%; min-height:130px;
+        background:rgba(0,0,0,.3);
+        border:1px solid var(--border);
+        border-radius:2px;
+        color:var(--text);
+        font-family:'IBM Plex Mono',monospace;
+        font-size:.8rem; line-height:1.7;
+        padding:.8rem 1rem;
+        resize:vertical;
+        outline:none;
+        transition:border-color .2s;
+      " onfocus="this.style.borderColor='#8b5cf6'"
+         onblur="this.style.borderColor='var(--border)'"
+      ></textarea>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:.8rem;">
+        <button onclick="saveNote('prom')" style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.68rem; letter-spacing:.08em;
+          text-transform:uppercase;
+          background:#8b5cf6; color:white;
+          border:none; padding:.5rem 1.2rem;
+          cursor:pointer; border-radius:2px;
+          transition:opacity .2s;
+        " onmouseover="this.style.opacity='.8'"
+           onmouseout="this.style.opacity='1'">
+          Zapisz uwagi
+        </button>
+      </div>
+    </div>
+
+    <!-- STUDENT PANEL -->
+    <div style="
+      border:1px solid var(--border);
+      border-top:3px solid var(--amber);
+      padding:1.5rem;
+      background:var(--surface);
+    ">
+      <div style="
+        display:flex; align-items:center; justify-content:space-between;
+        margin-bottom:1rem;
+      ">
+        <div style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.68rem; letter-spacing:.1em;
+          text-transform:uppercase; color:var(--amber);
+        ">// Odpowiedź Studenta · R. Baraniecki</div>
+        <div id="stud-timestamp" style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.6rem; color:var(--muted);
+        "></div>
+      </div>
+
+      <textarea id="stud-textarea" placeholder="Odpowiedź na uwagi Promotora — opis wprowadzonych poprawek lub pytania wyjaśniające…" style="
+        width:100%; min-height:130px;
+        background:rgba(0,0,0,.3);
+        border:1px solid var(--border);
+        border-radius:2px;
+        color:var(--text);
+        font-family:'IBM Plex Mono',monospace;
+        font-size:.8rem; line-height:1.7;
+        padding:.8rem 1rem;
+        resize:vertical;
+        outline:none;
+        transition:border-color .2s;
+      " onfocus="this.style.borderColor='var(--amber)'"
+         onblur="this.style.borderColor='var(--border)'"
+      ></textarea>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:.8rem;">
+        <div id="save-confirm" style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.6rem; color:var(--green);
+          opacity:0; transition:opacity .4s;
+        ">✓ zapisano</div>
+        <button onclick="saveNote('stud')" style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.68rem; letter-spacing:.08em;
+          text-transform:uppercase;
+          background:var(--amber); color:#0a0e17;
+          border:none; padding:.5rem 1.2rem;
+          cursor:pointer; border-radius:2px;
+          transition:opacity .2s;
+        " onmouseover="this.style.opacity='.8'"
+           onmouseout="this.style.opacity='1'">
+          Zapisz odpowiedź
+        </button>
+      </div>
+    </div>
+
+    <!-- HISTORY LOG -->
+    <div id="history-log" style="margin-top:1.5rem; display:none;">
+      <div style="
+        font-family:'IBM Plex Mono',monospace;
+        font-size:.62rem; letter-spacing:.1em;
+        text-transform:uppercase; color:var(--muted);
+        margin-bottom:.8rem; padding-bottom:.4rem;
+        border-bottom:1px solid var(--border);
+      ">// Historia wpisów</div>
+      <div id="history-entries"></div>
+    </div>
+
+    <!-- EXPORT / IMPORT BAR -->
+    <div style="
+      margin-top:1.5rem;
+      border:1px solid var(--border);
+      padding:1rem 1.2rem;
+      background:var(--surface);
+      display:flex; flex-wrap:wrap;
+      align-items:center; gap:.8rem;
+      justify-content:space-between;
+    ">
+      <div style="
+        font-family:'IBM Plex Mono',monospace;
+        font-size:.62rem; letter-spacing:.1em;
+        text-transform:uppercase; color:var(--muted);
+      ">// Eksport · Import · JSON</div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:.6rem; align-items:center;">
+
+        <!-- EXPORT -->
+        <button onclick="exportJSON()" style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.65rem; letter-spacing:.07em;
+          text-transform:uppercase;
+          background:transparent; color:var(--green);
+          border:1px solid #064e3b; padding:.4rem 1rem;
+          cursor:pointer; border-radius:2px;
+          transition:background .2s;
+        " onmouseover="this.style.background='rgba(16,185,129,.08)'"
+           onmouseout="this.style.background='transparent'">
+          ↓ Pobierz plik JSON
+        </button>
+
+        <!-- IMPORT -->
+        <label style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.65rem; letter-spacing:.07em;
+          text-transform:uppercase;
+          background:transparent; color:var(--blue);
+          border:1px solid var(--blue-dim); padding:.4rem 1rem;
+          cursor:pointer; border-radius:2px;
+          transition:background .2s;
+          display:inline-block;
+        " onmouseover="this.style.background='rgba(59,130,246,.08)'"
+           onmouseout="this.style.background='transparent'">
+          ↑ Wgraj plik JSON
+          <input type="file" accept=".json" onchange="importJSON(event)"
+                 style="display:none;">
+        </label>
+
+        <!-- IMPORT CONFIRM -->
+        <span id="import-confirm" style="
+          font-family:'IBM Plex Mono',monospace;
+          font-size:.6rem; color:var(--green);
+          opacity:0; transition:opacity .4s;
+        ">✓ wgrano</span>
+
+      </div>
+    </div>
+
+    <!-- INFO NOTE -->
+    <div style="
+      margin-top:.8rem;
+      font-family:'IBM Plex Mono',monospace;
+      font-size:.6rem; color:var(--muted);
+      line-height:1.8;
+    ">
+      ⓘ Uwagi zapisywane lokalnie (localStorage). Aby przekazać je drugiej stronie:<br>
+      <span style="color:var(--text);">Promotor</span> — kliknij <em>Pobierz JSON</em> → wyślij plik mailem → Student klika <em>Wgraj JSON</em>.<br>
+      <span style="color:var(--text);">Student</span> — po dodaniu odpowiedzi kliknij <em>Pobierz JSON</em> → wyślij plik mailem → Promotor klika <em>Wgraj JSON</em>.
+    </div>
+
+  </div>
+</section>
+
+<script>
+  // ── NOTES SYSTEM ──
+  const KEYS = { prom: 'uek_prom_note', stud: 'uek_stud_note' };
+  const HIST  = 'uek_notes_history';
+
+  function fmt(ts) {
+    return new Date(ts).toLocaleString('pl-PL', {
+      day:'2-digit', month:'2-digit', year:'numeric',
+      hour:'2-digit', minute:'2-digit'
+    });
+  }
+
+  function loadNotes() {
+    ['prom','stud'].forEach(who => {
+      const saved = localStorage.getItem(KEYS[who]);
+      if (saved) {
+        const obj = JSON.parse(saved);
+        document.getElementById(who+'-textarea').value = obj.text || '';
+        const tsEl = document.getElementById(who+'-timestamp');
+        if (tsEl && obj.ts) tsEl.textContent = 'ostatnia zmiana: ' + fmt(obj.ts);
+      }
+    });
+    renderHistory();
+  }
+
+  function saveNote(who) {
+    const text = document.getElementById(who+'-textarea').value.trim();
+    if (!text) return;
+    const ts = Date.now();
+    localStorage.setItem(KEYS[who], JSON.stringify({ text, ts }));
+
+    const tsEl = document.getElementById(who+'-timestamp');
+    if (tsEl) tsEl.textContent = 'ostatnia zmiana: ' + fmt(ts);
+
+    const hist = JSON.parse(localStorage.getItem(HIST) || '[]');
+    const label = who === 'prom' ? 'Promotor' : 'Student';
+    hist.push({ who: label, text: text.substring(0,120)+(text.length>120?'…':''), ts });
+    localStorage.setItem(HIST, JSON.stringify(hist.slice(-20)));
+
+    const confirm = document.getElementById('save-confirm');
+    if (confirm) { confirm.style.opacity='1'; setTimeout(()=>confirm.style.opacity='0', 2000); }
+
+    renderHistory();
+  }
+
+  // ── EXPORT ──
+  function exportJSON() {
+    const payload = {
+      meta: {
+        projekt: 'UEK Katowice 2026 · R. Baraniecki',
+        eksport: new Date().toISOString()
+      },
+      promotor: JSON.parse(localStorage.getItem(KEYS.prom) || 'null'),
+      student:  JSON.parse(localStorage.getItem(KEYS.stud)  || 'null'),
+      historia: JSON.parse(localStorage.getItem(HIST)       || '[]')
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const date = new Date().toISOString().slice(0,10);
+    a.href     = url;
+    a.download = `UEK_uwagi_${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── IMPORT ──
+  function importJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+
+        if (data.promotor) {
+          localStorage.setItem(KEYS.prom, JSON.stringify(data.promotor));
+        }
+        if (data.student) {
+          localStorage.setItem(KEYS.stud, JSON.stringify(data.student));
+        }
+        if (data.historia && data.historia.length) {
+          // merge histories — deduplicate by ts
+          const existing = JSON.parse(localStorage.getItem(HIST) || '[]');
+          const merged   = [...existing, ...data.historia];
+          const unique   = Array.from(new Map(merged.map(h => [h.ts, h])).values());
+          unique.sort((a,b) => a.ts - b.ts);
+          localStorage.setItem(HIST, JSON.stringify(unique.slice(-20)));
+        }
+
+        loadNotes(); // refresh UI
+
+        const confirm = document.getElementById('import-confirm');
+        if (confirm) { confirm.style.opacity='1'; setTimeout(()=>confirm.style.opacity='0', 2500); }
+
+      } catch(err) {
+        alert('Błąd odczytu pliku JSON. Upewnij się, że plik pochodzi z tej prezentacji.');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; // reset input so same file can be re-imported
+  }
+
+  // ── HISTORY ──
+  function renderHistory() {
+    const hist    = JSON.parse(localStorage.getItem(HIST) || '[]');
+    const log     = document.getElementById('history-log');
+    const entries = document.getElementById('history-entries');
+    if (!hist.length) { log.style.display='none'; return; }
+    log.style.display='block';
+    entries.innerHTML = hist.slice().reverse().map(h => `
+      <div style="
+        display:grid; grid-template-columns:120px 1fr;
+        gap:.8rem; padding:.5rem 0;
+        border-bottom:1px dotted var(--border);
+        font-size:.72rem;
+      ">
+        <div style="font-family:'IBM Plex Mono',monospace; color:var(--muted); font-size:.6rem; padding-top:.1rem;">
+          ${fmt(h.ts)}<br>
+          <span style="color:${h.who==='Promotor'?'#8b5cf6':'var(--amber)'};">${h.who}</span>
+        </div>
+        <div style="color:var(--text); line-height:1.6;">${h.text}</div>
+      </div>
+    `).join('');
+  }
+
+  window.addEventListener('load', loadNotes);
+</script>
+</body>
+</html>
+
+<!-- deploy 1779394802 -->
+< ! - -   d e p l o y   2 0 2 6 0 5 2 1 2 2 2 3 2 4   - - >  
+ 
