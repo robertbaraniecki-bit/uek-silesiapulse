@@ -1,0 +1,52 @@
+﻿RAPORT KONSOLIDACJI SilesiaPulse
+Data: 2026-05-30 16:58:43
+Zrodlo A : C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026
+Zrodlo B : C:\Projekty\SilesiaPulse_BACKUP_24.05
+Cel      : C:\Projekty\uek-silesiapulse
+======================================================================
+
+SKOPIOWANE (23):
+[NOWSZY] C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\jsw_d.csv -> C:\Projekty\uek-silesiapulse\data\jsw_d.csv
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\kghm_d.csv -> C:\Projekty\uek-silesiapulse\data\kghm_d.csv
+[NOWSZY] C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\nbp_eur_2020_2026.csv -> C:\Projekty\uek-silesiapulse\data\nbp_eur_2020_2026.csv
+[NOWSZY] C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\nbp_usd_2020_2026.csv -> C:\Projekty\uek-silesiapulse\data\nbp_usd_2020_2026.csv
+[NOWSZY] C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\pkn_d.csv -> C:\Projekty\uek-silesiapulse\data\pkn_d.csv
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\pobierz_nbp.py -> C:\Projekty\uek-silesiapulse\data\pobierz_nbp.py
+[NOWSZY] C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\wig20_d.csv -> C:\Projekty\uek-silesiapulse\data\wig20_d.csv
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\UEK_INSTR_2026-04-11.docx -> C:\Projekty\uek-silesiapulse\docs\UEK_INSTR_2026-04-11.docx
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\UEK_INSTR_2026-04-13.docx -> C:\Projekty\uek-silesiapulse\docs\UEK_INSTR_2026-04-13.docx
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\UEK_INSTR_2026-04-17.docx -> C:\Projekty\uek-silesiapulse\docs\UEK_INSTR_2026-04-17.docx
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\UEK_INSTR_2026-04-19.docx -> C:\Projekty\uek-silesiapulse\docs\UEK_INSTR_2026-04-19.docx
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\UEK_INSTR_2026-04-30.docx -> C:\Projekty\uek-silesiapulse\docs\UEK_INSTR_2026-04-30.docx
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\UEK_Projekt_Instrukcja_Fazowa_12_05_2026.docx -> C:\Projekty\uek-silesiapulse\docs\UEK_Projekt_Instrukcja_Fazowa_12_05_2026.docx
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\AKTUALNE INSTRUKCJE\AXIS_BRIEFING_SilesiaPulse.md -> C:\Projekty\uek-silesiapulse\docs\AKTUALNE INSTRUKCJE\AXIS_BRIEFING_SilesiaPulse.md
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\AKTUALNE INSTRUKCJE\NEXUS_MEMORY_2026-05-25_Kontrola_Okresu.md -> C:\Projekty\uek-silesiapulse\docs\AKTUALNE INSTRUKCJE\NEXUS_MEMORY_2026-05-25_Kontrola_Okresu.md
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\AKTUALNE INSTRUKCJE\Nowy Obraz — mapa bitowa.bmp -> C:\Projekty\uek-silesiapulse\docs\AKTUALNE INSTRUKCJE\Nowy Obraz — mapa bitowa.bmp
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\AKTUALNE INSTRUKCJE\SilesiaPulse_PowerBI_Poradnik_2026-05-25.docx -> C:\Projekty\uek-silesiapulse\docs\AKTUALNE INSTRUKCJE\SilesiaPulse_PowerBI_Poradnik_2026-05-25.docx
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\AKTUALNE INSTRUKCJE\SilesiaPulse_Raport_Stanu_2026-05-25.docx -> C:\Projekty\uek-silesiapulse\docs\AKTUALNE INSTRUKCJE\SilesiaPulse_Raport_Stanu_2026-05-25.docx
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\INSTRUKCJE\AKTUALNE INSTRUKCJE\SilesiaPulse_Srodowisko_Pracy_2026-05-12.docx -> C:\Projekty\uek-silesiapulse\docs\AKTUALNE INSTRUKCJE\SilesiaPulse_Srodowisko_Pracy_2026-05-12.docx
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\FRONTEND\gazeta.html -> C:\Projekty\uek-silesiapulse\prezentacja\frontend\gazeta.html
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\FRONTEND\index.html -> C:\Projekty\uek-silesiapulse\prezentacja\frontend\index.html
+[NOWY]   C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\FRONTEND\silesiapulse.html -> C:\Projekty\uek-silesiapulse\prezentacja\frontend\silesiapulse.html
+[NOWSZY] C:\Projekty\SilesiaPulse_BACKUP_24.05\data\data_gpr_export.xls -> C:\Projekty\uek-silesiapulse\data\data_gpr_export.xls
+
+POMINIETE (17):
+[SKIP-blacklist] C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\blad.txt
+[SKIP-aktualny] C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\data_gpr_export.xls
+[SKIP-aktualny] C:\Users\Oloros\OneDrive\Pulpit\Projekt SILESIA PULSE 2026\PROJEKT\dane_csv\kgh_d.csv
+[SKIP-aktualny] C:\Projekty\SilesiaPulse_BACKUP_24.05\data\jsw_d.csv
+[SKIP-aktualny] C:\Projekty\SilesiaPulse_BACKUP_24.05\data\kgh_d.csv
+[SKIP-aktualny] C:\Projekty\SilesiaPulse_BACKUP_24.05\data\nbp_eur_2020_2026.csv
+[SKIP-aktualny] C:\Projekty\SilesiaPulse_BACKUP_24.05\data\nbp_usd_2020_2026.csv
+[SKIP-aktualny] C:\Projekty\SilesiaPulse_BACKUP_24.05\data\pkn_d.csv
+[SKIP-aktualny] C:\Projekty\SilesiaPulse_BACKUP_24.05\data\wig20_d.csv
+[SKIP-aktualny] C:\Projekty\SilesiaPulse_BACKUP_24.05\docs\instrukcje\SilesiaPulse_Srodowisko_Pracy_12_05_2026.docx
+[SKIP-aktualny] C:\Projekty\SilesiaPulse_BACKUP_24.05\python\pobierz_dane.py
+[SKIP-aktualny] C:\Projekty\SilesiaPulse_BACKUP_24.05\python\silesiapulse_ai.py
+[SKIP-excl-folder] C:\Projekty\SilesiaPulse_BACKUP_24.05\python\_archiwum\pobierz_nbp.py
+[SKIP-excl-folder] C:\Projekty\SilesiaPulse_BACKUP_24.05\python\_archiwum\pobierz_spolki.py
+[SKIP-excl-folder] C:\Projekty\SilesiaPulse_BACKUP_24.05\python\_archiwum\pobierz_wig20_stooq.py
+[SKIP-excl-folder] C:\Projekty\SilesiaPulse_BACKUP_24.05\python\_archiwum\silesiapulse_ai_old.py
+[SKIP-brak] C:\Projekty\SilesiaPulse_BACKUP_24.05\start_silesiapulse.bat
+
+KONIEC RAPORTU
