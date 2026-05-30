@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robert Baraniecki · Tool Ecosystem</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --claude:    #7B61FF;
+    --design:    #A78BFA;
+    --higgsfield:#00D4AA;
+    --notion:    #FFFFFF;
+    --gdrive:    #4A90E2;
+    --obs:       #E03030;
+    --davinci:   #FF7B35;
+    --bg:        #0A0A14;
+    --surface:   #12121E;
+    --border:    rgba(255,255,255,0.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Space Grotesk', sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  canvas#stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeDown 0.8s ease both;
+  }
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.55) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.38);
+    font-weight: 300;
+  }
+
+  /* ── MAP CONTAINER ── */
+  .map-wrap {
+    position: relative;
+    width: min(820px, 100%);
+    aspect-ratio: 1 / 0.85;
+  }
+
+  /* SVG connections */
+  .connections-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .conn-line {
+    stroke: rgba(255,255,255,0.06);
+    stroke-width: 1;
+    fill: none;
+    stroke-dasharray: 5 6;
+    animation: dash 18s linear infinite;
+  }
+  .conn-line.active {
+    stroke: rgba(255,255,255,0.18);
+    stroke-dasharray: 3 5;
+    animation: dash 8s linear infinite;
+  }
+  @keyframes dash {
+    to { stroke-dashoffset: -200; }
+  }
+
+  /* ── CENTER HUB ── */
+  .hub {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 96px; height: 96px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 10;
+    animation: fadeIn 1s 0.2s ease both;
+  }
+  .hub-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(123,97,255,0.3);
+    animation: hubPulse 3s ease-in-out infinite;
+  }
+  .hub-ring:nth-child(2) {
+    inset: -14px;
+    border-color: rgba(123,97,255,0.15);
+    animation-delay: 1s;
+  }
+  .hub-ring:nth-child(3) {
+    inset: -28px;
+    border-color: rgba(123,97,255,0.07);
+    animation-delay: 2s;
+  }
+  @keyframes hubPulse {
+    0%,100% { opacity: 0.6; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.04); }
+  }
+  .hub-inner {
+    position: relative;
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #1A1530, #0D0A1A);
+    border: 1px solid rgba(123,97,255,0.45);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px;
+  }
+  .hub-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: rgba(123,97,255,0.9);
+    text-transform: uppercase;
+  }
+  .hub-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: -0.01em;
+  }
+
+  /* ── APP NODES ── */
+  .node {
+    position: absolute;
+    width: 120px;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    z-index: 5;
+    animation: nodeIn 0.7s ease both;
+  }
+  .node:nth-child(1) { animation-delay: 0.1s; }
+  .node:nth-child(2) { animation-delay: 0.2s; }
+  .node:nth-child(3) { animation-delay: 0.3s; }
+  .node:nth-child(4) { animation-delay: 0.4s; }
+  .node:nth-child(5) { animation-delay: 0.5s; }
+  .node:nth-child(6) { animation-delay: 0.6s; }
+  .node:nth-child(7) { animation-delay: 0.7s; }
+
+  @keyframes nodeIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+
+  .node-icon {
+    width: 64px; height: 64px;
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--surface);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .node-icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--glow, transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    border-radius: inherit;
+  }
+  .node:hover .node-icon {
+    transform: translateY(-4px) scale(1.08);
+    border-color: var(--accent, rgba(255,255,255,0.3));
+    box-shadow: 0 0 24px var(--glow-color, rgba(255,255,255,0.15)),
+                0 8px 24px rgba(0,0,0,0.5);
+  }
+  .node:hover .node-icon::before { opacity: 0.12; }
+
+  .node-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.75);
+    text-align: center;
+    line-height: 1.3;
+    transition: color 0.2s;
+  }
+  .node:hover .node-name { color: #fff; }
+
+  .node-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--accent-color, rgba(255,255,255,0.3));
+    text-transform: uppercase;
+    margin-top: -4px;
+  }
+
+  /* tooltip */
+  .node-tip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    background: #1A1A2E;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 20;
+  }
+  .node:hover .node-tip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── CATEGORY ZONES ── */
+  .zone-label {
+    position: absolute;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.18);
+    pointer-events: none;
+  }
+
+  /* ── FOOTER STRIP ── */
+  .footer-strip {
+    margin-top: 48px;
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    animation: fadeUp 0.8s 0.9s ease both;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-n {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: rgba(123,97,255,0.9);
+  }
+  .stat-l {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    margin-top: 2px;
+  }
+  .stat-sep {
+    width: 1px;
+    height: 36px;
+    background: rgba(255,255,255,0.08);
+  }
+
+  /* ── BACK LINK ── */
+  .eco-back {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    margin-top: 6px;
+    display: inline-block;
+  }
+  .eco-back:hover {
+    color: rgba(123,97,255,0.9);
+    border-color: rgba(123,97,255,0.4);
+    background: rgba(123,97,255,0.07);
+  }
+
+  /* ── LEGEND ── */
+  .legend {
+    margin-top: 32px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    animation: fadeUp 0.8s 1s ease both;
+  }
+  .leg-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+  }
+  .leg-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ── KEYFRAMES ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%,-50%) scale(0.8); }
+    to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  }
+
+  /* click ripple */
+  @keyframes ripple {
+    from { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+    to   { transform: translate(-50%,-50%) scale(2.5); opacity: 0; }
+  }
+  .ripple-el {
+    position: absolute;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    pointer-events: none;
+    animation: ripple 0.6s ease-out forwards;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="wrapper">
+
+  <header>
+    <p class="eyebrow">Robert Baraniecki · AXIS Ecosystem</p>
+    <h1>Tool Stack 2026</h1>
+    <p class="subtitle">Aplikacje i platformy z którymi pracuję na co dzień</p>
+  </header>
+
+  <div class="map-wrap" id="map">
+
+    <!-- SVG connections drawn by JS -->
+    <svg class="connections-svg" id="connSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+    <!-- CENTER HUB -->
+    <div class="hub">
+      <div class="hub-ring"></div>
+      <div class="hub-ring"></div>
+      <div class="hub-ring"></div>
+      <div class="hub-inner">
+        <span class="hub-label">AXIS</span>
+        <span class="hub-name">Workspace</span>
+      </div>
+    </div>
+
+    <!-- NODES injected by JS -->
+  </div>
+
+  <div class="footer-strip">
+    <div class="stat"><div class="stat-n">7</div><div class="stat-l">Narzędzi</div></div>
+    <div class="stat-sep"></div>
+    <div class="stat"><div class="stat-n">3</div><div class="stat-l">Kategorie</div></div>
+    <div class="stat-sep"></div>
+    <div class="stat"><div class="stat-n">2026</div><div class="stat-l">Aktywny</div></div>
+  </div>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#7B61FF"></div>AI &amp; Kreacja</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#4A90E2"></div>Produktywność</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#FF7B35"></div>Produkcja wideo</div>
+    <a href="ecosystem2.html" style="margin-left:auto; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.3); text-decoration:none; border:1px solid rgba(255,255,255,0.1); padding:4px 10px; border-radius:3px; transition:color 0.2s, border-color 0.2s, background 0.2s;" onmouseover="this.style.color='rgba(123,97,255,0.9)';this.style.borderColor='rgba(123,97,255,0.4)';this.style.background='rgba(123,97,255,0.07)'" onmouseout="this.style.color='rgba(255,255,255,0.3)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='transparent'">← Ecosystem 2</a>
+  </div>
+
+</div>
+
+<script>
+// ── STARS ──────────────────────────────────────────────────────────────
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+let stars = [];
+
+function initStars() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  stars = Array.from({length: 160}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.2 + 0.2,
+    a: Math.random(),
+    speed: Math.random() * 0.004 + 0.001,
+    phase: Math.random() * Math.PI * 2
+  }));
+}
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    const a = 0.15 + 0.25 * Math.sin(t * s.speed + s.phase);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+
+initStars();
+window.addEventListener('resize', initStars);
+requestAnimationFrame(drawStars);
+
+// ── APP DATA ───────────────────────────────────────────────────────────
+const apps = [
+  {
+    id: 'claude',
+    name: 'Claude',
+    sub: 'AI · Sonnet 4.6',
+    tag: 'AI',
+    url: 'https://claude.ai',
+    cat: 'ai',
+    accent: '#7B61FF',
+    glowColor: 'rgba(123,97,255,0.4)',
+    icon: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" fill="none" stroke="#7B61FF" stroke-width="1.5" opacity="0.4"/>
+      <path d="M12 24 L18 10 L24 24" stroke="#7B61FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M13.5 20.5 L22.5 20.5" stroke="#7B61FF" stroke-width="2" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    id: 'claude-design',
+    name: 'Claude Design',
+    sub: 'Wizualizacja AI',
+    tag: 'AI',
+    url: 'https://claude.ai',
+    cat: 'ai',
+    accent: '#A78BFA',
+    glowColor: 'rgba(167,139,250,0.4)',
+    icon: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <rect x="8" y="8" width="20" height="20" rx="5" stroke="#A78BFA" stroke-width="1.5" fill="none" opacity="0.4"/>
+      <circle cx="14" cy="14" r="3" fill="#A78BFA" opacity="0.7"/>
+      <path d="M10 26 L16 18 L21 22 L25 16 L26 26Z" fill="#A78BFA" opacity="0.5"/>
+      <path d="M10 26 L16 18 L21 22 L25 16 L26 26Z" stroke="#A78BFA" stroke-width="1" fill="none"/>
+    </svg>`
+  },
+  {
+    id: 'higgsfield',
+    name: 'Higgsfield AI',
+    sub: 'Generowanie wideo',
+    tag: 'AI',
+    url: 'https://higgsfield.ai',
+    cat: 'ai',
+    accent: '#00D4AA',
+    glowColor: 'rgba(0,212,170,0.4)',
+    icon: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <path d="M18 6 L30 12 L30 24 L18 30 L6 24 L6 12 Z" stroke="#00D4AA" stroke-width="1.5" fill="none" opacity="0.35"/>
+      <polygon points="14,14 24,18 14,22" fill="#00D4AA" opacity="0.85"/>
+      <circle cx="18" cy="18" r="3" fill="none" stroke="#00D4AA" stroke-width="1.5" opacity="0.6"/>
+    </svg>`
+  },
+  {
+    id: 'notion',
+    name: 'Notion',
+    sub: 'Baza wiedzy',
+    tag: 'PROD',
+    url: 'https://notion.so',
+    cat: 'prod',
+    accent: '#DDDDDD',
+    glowColor: 'rgba(220,220,220,0.3)',
+    icon: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <rect x="9" y="7" width="18" height="22" rx="3" fill="none" stroke="#DDD" stroke-width="1.5" opacity="0.5"/>
+      <path d="M9 12 C9 9.8 10.8 8 13 8 L27 8 L27 10 L12 10 C10.9 10 10 10.9 10 12 L10 30 L9 30 Z" fill="#DDD" opacity="0.25"/>
+      <text x="14.5" y="21" font-family="serif" font-weight="700" font-size="14" fill="#DDD" opacity="0.9">N</text>
+    </svg>`
+  },
+  {
+    id: 'gdrive',
+    name: 'Google Drive',
+    sub: 'Chmura · pliki',
+    tag: 'PROD',
+    url: 'https://drive.google.com',
+    cat: 'prod',
+    accent: '#4A90E2',
+    glowColor: 'rgba(74,144,226,0.4)',
+    icon: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <path d="M18 8 L28 26 L8 26 Z" fill="none" stroke="#4A90E2" stroke-width="1.5" opacity="0.4"/>
+      <path d="M8 26 L18 8 L24 19" stroke="#34A853" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M18 8 L28 26 L16 26" stroke="#FBBC05" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M8 26 L28 26" stroke="#4285F4" stroke-width="2" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    id: 'obs',
+    name: 'OBS Studio',
+    sub: 'Nagrywanie · live',
+    tag: 'VIDEO',
+    url: null,
+    cat: 'video',
+    accent: '#E03030',
+    glowColor: 'rgba(224,48,48,0.4)',
+    icon: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="13" stroke="#E03030" stroke-width="1.5" fill="none" opacity="0.4"/>
+      <circle cx="18" cy="18" r="8" fill="none" stroke="#E03030" stroke-width="1.5" opacity="0.6"/>
+      <circle cx="18" cy="18" r="4" fill="#E03030" opacity="0.85"/>
+      <circle cx="25" cy="11" r="3" fill="#1A1A1A" stroke="#E03030" stroke-width="1.5"/>
+      <circle cx="25" cy="11" r="1.2" fill="#E03030"/>
+    </svg>`
+  },
+  {
+    id: 'davinci',
+    name: 'DaVinci Resolve',
+    sub: 'Montaż wideo',
+    tag: 'VIDEO',
+    url: null,
+    cat: 'video',
+    accent: '#FF7B35',
+    glowColor: 'rgba(255,123,53,0.4)',
+    icon: `<svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="13" stroke="#FF7B35" stroke-width="1.5" fill="none" opacity="0.35"/>
+      <circle cx="18" cy="18" r="7" stroke="#FF7B35" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <path d="M14 13 Q18 10 22 13 Q26 18 22 23 Q18 26 14 23 Q10 18 14 13Z" fill="#FF7B35" opacity="0.2"/>
+      <path d="M14 13 Q18 10 22 13 Q26 18 22 23 Q18 26 14 23 Q10 18 14 13Z" stroke="#FF7B35" stroke-width="1.5" fill="none"/>
+      <circle cx="18" cy="18" r="2.5" fill="#FF7B35" opacity="0.9"/>
+    </svg>`
+  }
+];
+
+// ── LAYOUT ─────────────────────────────────────────────────────────────
+const map = document.getElementById('map');
+const connSvg = document.getElementById('connSvg');
+
+function getMapCenter() {
+  const r = map.getBoundingClientRect();
+  return { w: r.width, h: r.height };
+}
+
+function buildLayout() {
+  const { w, h } = getMapCenter();
+  const cx = w / 2;
+  const cy = h / 2;
+  const radius = Math.min(w, h) * 0.36;
+
+  // angles: spread 7 nodes evenly, offset so top node is near 12 o'clock
+  const n = apps.length;
+  return apps.map((app, i) => {
+    const angle = (i * 2 * Math.PI / n) - Math.PI / 2 + (Math.PI / n);
+    return {
+      ...app,
+      x: cx + radius * Math.cos(angle),
+      y: cy + radius * Math.sin(angle)
+    };
+  });
+}
+
+function renderNodes(layout) {
+  // remove old nodes
+  map.querySelectorAll('.node').forEach(el => el.remove());
+
+  layout.forEach(app => {
+    const node = document.createElement('div');
+    node.className = 'node';
+    node.style.left = app.x + 'px';
+    node.style.top  = app.y + 'px';
+    node.style.setProperty('--accent', app.accent);
+    node.style.setProperty('--glow', app.accent);
+    node.style.setProperty('--glow-color', app.glowColor);
+    node.style.setProperty('--accent-color', app.accent);
+
+    const tipText = app.url ? 'Otwórz →' : 'Aplikacja lokalna';
+
+    node.innerHTML = `
+      <div class="node-tip">${tipText}</div>
+      <div class="node-icon" style="--glow:${app.accent}">
+        ${app.icon}
+      </div>
+      <div class="node-name">${app.name}</div>
+      <div class="node-tag" style="color:${app.accent}">${app.sub}</div>
+    `;
+
+    node.addEventListener('click', () => {
+      // ripple
+      const ripple = document.createElement('div');
+      ripple.className = 'ripple-el';
+      ripple.style.color = app.accent;
+      ripple.style.left = '50%';
+      ripple.style.top  = '38px'; // icon center-ish
+      node.querySelector('.node-icon').appendChild(ripple);
+      setTimeout(() => ripple.remove(), 700);
+
+      if (app.url) {
+        window.open(app.url, '_blank');
+      }
+    });
+
+    map.appendChild(node);
+  });
+}
+
+function renderConnections(layout) {
+  connSvg.innerHTML = '';
+  const { w, h } = getMapCenter();
+  const cx = w / 2;
+  const cy = h / 2;
+
+  // hub → each node
+  layout.forEach(app => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', cx);
+    line.setAttribute('y1', cy);
+    line.setAttribute('x2', app.x);
+    line.setAttribute('y2', app.y);
+    line.setAttribute('class', 'conn-line active');
+    line.setAttribute('stroke', app.accent);
+    line.setAttribute('stroke-opacity', '0.18');
+    line.setAttribute('stroke-dasharray', '4 6');
+    connSvg.appendChild(line);
+  });
+
+  // category connections (same-cat nodes)
+  for (let i = 0; i < layout.length; i++) {
+    for (let j = i + 1; j < layout.length; j++) {
+      if (layout[i].cat === layout[j].cat) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', layout[i].x);
+        line.setAttribute('y1', layout[i].y);
+        line.setAttribute('x2', layout[j].x);
+        line.setAttribute('y2', layout[j].y);
+        line.setAttribute('class', 'conn-line');
+        line.setAttribute('stroke', layout[i].accent);
+        line.setAttribute('stroke-opacity', '0.1');
+        connSvg.appendChild(line);
+      }
+    }
+  }
+}
+
+function build() {
+  const layout = buildLayout();
+  renderConnections(layout);
+  renderNodes(layout);
+}
+
+// initial build after fonts/layout settle
+setTimeout(build, 80);
+window.addEventListener('resize', () => setTimeout(build, 80));
+</script>
+</body>
+</html>

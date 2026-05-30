@@ -8,7 +8,7 @@
 #
 # WYWOŁANIE:
 #   Z VBA przez: Shell "python geopulse_ai.py"
-#   lub: xlwings RunPython (zależnie od konfiguracji po zajęciach Kaczmarzyka)
+#   lub: xlwings RunPython (zależnie od konfiguracji po zajęciach dr Kaczmarzyka)
 #
 # LOGIKA:
 #   1. Czyta DAYS_BACK z arkusza Config (sterowane suwakiem w Excelu)
@@ -35,23 +35,13 @@ def polacz_z_excelem():
     return wb
 
 def czytaj_config(wb):
-    """
-    Czyta konfigurację z ukrytego arkusza Config.
-    Struktura arkusza Config:
-        A1: ANTHROPIC_API_KEY    B1: sk-ant-...
-        A2: MODEL                B2: claude-sonnet-4-6
-        A3: MAX_TOKENS           B3: 600
-        A4: DAYS_BACK            B4: [wartość z suwaka, np. 30]
-    """
     ws_config = wb.sheets['Config']
-    
     config = {
-        'api_key':   ws_config.range('B1').value,
-        'model':     ws_config.range('B2').value,
+        'api_key':    ws_config.range('B1').value,
+        'model':      ws_config.range('B2').value,
         'max_tokens': int(ws_config.range('B3').value),
         'days_back':  int(ws_config.range('B4').value)
     }
-    
     return config
 
 # =============================================================================
@@ -59,98 +49,55 @@ def czytaj_config(wb):
 # =============================================================================
 
 def pobierz_dane_master(wb, days_back):
-    """
-    Pobiera dane z arkusza qry_MASTER za ostatnie N dni.
-    Zwraca DataFrame z kolumnami:
-    Data, USD_PLN, EUR_PLN, WIG20, JSW, KGHM, PKN, VIX, GPR, GPRC_POL, Komentarz_AI
-    
-    UWAGA: GPRC_POL to udział medialny Polski (skala 0.0–1.0) — NIE indeks.
-    GPR (kolumna GPR Global ~230) = właściwy indeks ilościowy do analiz.
-    """
     ws_master = wb.sheets['qry_MASTER']
-    
-    # Pobierz wszystkie dane z nagłówkiem
     dane = ws_master.range('A1').expand().value
     naglowki = dane[0]
     wiersze = dane[1:]
-    
     df = pd.DataFrame(wiersze, columns=naglowki)
     df['Data'] = pd.to_datetime(df['Data'])
     df = df.sort_values('Data').reset_index(drop=True)
-    
-    # Filtruj do ostatnich N dni roboczych
     data_graniczna = datetime.now() - timedelta(days=days_back)
     df_okno = df[df['Data'] >= data_graniczna].copy()
-    
     return df, df_okno
 
 # =============================================================================
-# KROK 3 — AGREGACJA DANYCH (Opcja B — dane zagregowane, nie surowe wiersze)
+# KROK 3 — AGREGACJA DANYCH
 # =============================================================================
 
 def agreguj_dane(df_okno):
-    """
-    Agreguje dane dla okna czasowego.
-    Claude dostaje liczby, nie surową tabelę — lepsza jakość komentarza,
-    niższy koszt tokenów.
-    
-    GPRC_POL interpretowany jako sygnał ekspozycji medialnej (0.0–1.0),
-    nie jako indeks porównywalny z GPR Global.
-    """
     if df_okno.empty:
         return None
-    
     data_od = df_okno['Data'].min().strftime('%Y-%m-%d')
     data_do = df_okno['Data'].max().strftime('%Y-%m-%d')
     liczba_dni = len(df_okno)
-    
     agregat = {
         'okres': f"{data_od} do {data_do} ({liczba_dni} dni roboczych)",
-        
-        # GPR Global — główny indeks ilościowy
-        'gpr_srednia':  round(df_okno['GPR'].mean(), 2),
-        'gpr_min':      round(df_okno['GPR'].min(), 2),
-        'gpr_max':      round(df_okno['GPR'].max(), 2),
-        'gpr_trend':    round(df_okno['GPR'].iloc[-1] - df_okno['GPR'].iloc[0], 2),
-        
-        # GPRC_POL — udział medialny Polski (0.0–1.0, nie indeks!)
+        'gpr_srednia':      round(df_okno['GPR'].mean(), 2),
+        'gpr_min':          round(df_okno['GPR'].min(), 2),
+        'gpr_max':          round(df_okno['GPR'].max(), 2),
+        'gpr_trend':        round(df_okno['GPR'].iloc[-1] - df_okno['GPR'].iloc[0], 2),
         'gprc_pol_srednia': round(df_okno['GPRC_POL'].mean(), 4),
-        
-        # VIX
-        'vix_srednia':  round(df_okno['VIX'].mean(), 2),
-        'vix_max':      round(df_okno['VIX'].max(), 2),
-        
-        # Kursy walut
-        'usd_pln_srednia': round(df_okno['USD_PLN'].mean(), 4),
-        'usd_pln_trend':   round(df_okno['USD_PLN'].iloc[-1] - df_okno['USD_PLN'].iloc[0], 4),
-        'eur_pln_srednia': round(df_okno['EUR_PLN'].mean(), 4),
-        
-        # Spółki śląskie
-        'wig20_srednia':   round(df_okno['WIG20'].mean(), 2),
-        'wig20_trend':     round(df_okno['WIG20'].iloc[-1] - df_okno['WIG20'].iloc[0], 2),
-        'jsw_srednia':     round(df_okno['JSW'].mean(), 2),
-        'jsw_trend':       round(df_okno['JSW'].iloc[-1] - df_okno['JSW'].iloc[0], 2),
-        'kghm_srednia':    round(df_okno['KGHM'].mean(), 2),
-        'kghm_trend':      round(df_okno['KGHM'].iloc[-1] - df_okno['KGHM'].iloc[0], 2),
-        'pkn_srednia':     round(df_okno['PKN'].mean(), 2),
-        'pkn_trend':       round(df_okno['PKN'].iloc[-1] - df_okno['PKN'].iloc[0], 2),
+        'vix_srednia':      round(df_okno['VIX'].mean(), 2),
+        'vix_max':          round(df_okno['VIX'].max(), 2),
+        'usd_pln_srednia':  round(df_okno['USD_PLN'].mean(), 4),
+        'usd_pln_trend':    round(df_okno['USD_PLN'].iloc[-1] - df_okno['USD_PLN'].iloc[0], 4),
+        'eur_pln_srednia':  round(df_okno['EUR_PLN'].mean(), 4),
+        'wig20_srednia':    round(df_okno['WIG20'].mean(), 2),
+        'wig20_trend':      round(df_okno['WIG20'].iloc[-1] - df_okno['WIG20'].iloc[0], 2),
+        'jsw_srednia':      round(df_okno['JSW'].mean(), 2),
+        'jsw_trend':        round(df_okno['JSW'].iloc[-1] - df_okno['JSW'].iloc[0], 2),
+        'kghm_srednia':     round(df_okno['KGHM'].mean(), 2),
+        'kghm_trend':       round(df_okno['KGHM'].iloc[-1] - df_okno['KGHM'].iloc[0], 2),
+        'pkn_srednia':      round(df_okno['PKN'].mean(), 2),
+        'pkn_trend':        round(df_okno['PKN'].iloc[-1] - df_okno['PKN'].iloc[0], 2),
     }
-    
     return agregat
 
 # =============================================================================
-# KROK 4 — BUDOWA PROMPTU DLA CLAUDE API
+# KROK 4 — BUDOWA PROMPTÓW
 # =============================================================================
 
 def buduj_prompt_zbiorczy(agregat):
-    """
-    Buduje prompt dla komentarza zbiorczego (arkusz AI_Summary).
-    Dane zagregowane — nie surowe wiersze.
-    
-    DECYZJA ARCHITEKTONICZNA:
-    Excel = warstwa wykonawcza (silnik, logika, AI)
-    Power BI = warstwa wizualizacyjna (odczyt gotowych danych)
-    """
     prompt = f"""Jesteś analitykiem ryzyka geopolitycznego specjalizującym się w gospodarce regionu Śląska (Polska).
 
 Przeanalizuj poniższe zagregowane dane finansowe i geopolityczne dla okresu {agregat['okres']}:
@@ -178,14 +125,9 @@ Napisz zwięzły komentarz analityczny (max 150 słów) który:
 4. Formułuje krótką rekomendację dla regionalnego inwestora
 
 Pisz po polsku, konkretnie, bez zbędnych wstępów. Bez formatowania markdown, bez gwiazdek, bez nagłówków — tylko czysty tekst z podziałem na akapity."""
-
     return prompt
 
 def buduj_prompt_dzienny(wiersz):
-    """
-    Buduje prompt dla komentarza dziennego (kolumna Komentarz_AI w qry_MASTER).
-    Jeden wiersz danych — krótki, zwięzły komentarz.
-    """
     prompt = f"""Jesteś analitykiem ryzyka geopolitycznego. Data analizy: {wiersz['Data'].strftime('%Y-%m-%d')}.
 
 Dane dzienne:
@@ -196,7 +138,6 @@ WIG20: {wiersz['WIG20']:.1f} | JSW: {wiersz['JSW']:.2f} | KGHM: {wiersz['KGHM']:
 Napisz dokładnie 2 zdania komentarza dla regionalnego inwestora śląskiego.
 Zasady: bez tytułów, bez nagłówków, bez formatowania markdown, bez gwiazdek.
 Tylko czysty tekst. Maksymalnie 50 słów łącznie. Po polsku."""
-
     return prompt
 
 # =============================================================================
@@ -204,17 +145,12 @@ Tylko czysty tekst. Maksymalnie 50 słów łącznie. Po polsku."""
 # =============================================================================
 
 def wywolaj_claude(prompt, config):
-    """Wywołuje Claude API i zwraca tekst komentarza."""
     klient = anthropic.Anthropic(api_key=config['api_key'])
-    
     odpowiedz = klient.messages.create(
         model=config['model'],
         max_tokens=config['max_tokens'],
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
+        messages=[{"role": "user", "content": prompt}]
     )
-    
     return odpowiedz.content[0].text.strip()
 
 # =============================================================================
@@ -222,126 +158,91 @@ def wywolaj_claude(prompt, config):
 # =============================================================================
 
 def zapisz_komentarz_zbiorczy(wb, komentarz, agregat):
-    """
-    Zapisuje komentarz zbiorczy do arkusza AI_Summary.
-    Power BI importuje ten arkusz i wyświetla jako kafelek tekstowy.
-    
-    Struktura AI_Summary:
-        A1: Data wygenerowania
-        A2: Okres analizy
-        A3: Komentarz AI
-    """
-    # Utwórz arkusz AI_Summary jeśli nie istnieje
     if 'AI_Summary' not in [s.name for s in wb.sheets]:
         wb.sheets.add('AI_Summary')
-    
     ws_summary = wb.sheets['AI_Summary']
     ws_summary.range('A1').value = f"Wygenerowano: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
     ws_summary.range('A2').value = f"Okres: {agregat['okres']}"
     ws_summary.range('A3').value = komentarz
-    
     print(f"✅ Komentarz zbiorczy zapisany do AI_Summary")
 
 def zapisz_komentarze_dzienne(wb, df, df_okno, config):
-    """
-    Zapisuje komentarze dzienne do kolumny Komentarz_AI w qry_MASTER.
-    LOGIKA PRZYROSTOWA: generuje tylko dla wierszy gdzie Komentarz_AI jest pusty
-    ORAZ data mieści się w oknie czasowym.
-    Nie nadpisuje istniejących komentarzy.
-    """
     ws_master = wb.sheets['qry_MASTER']
-    
-    # Znajdź indeks kolumny Komentarz_AI
     naglowki = ws_master.range('A1').expand('right').value
     if 'Komentarz_AI' not in naglowki:
         print("⚠️ Brak kolumny Komentarz_AI w qry_MASTER")
         return
-    
-    idx_komentarz = naglowki.index('Komentarz_AI')  # 0-based
-    col_letter_offset = idx_komentarz + 1            # 1-based dla xlwings
-    
+    idx_komentarz = naglowki.index('Komentarz_AI')
+    col_letter_offset = idx_komentarz + 1
     wiersze_do_przetworzenia = 0
     wiersze_przetworzone = 0
-    
-    for excel_row_0based, (i, row) in enumerate(df_okno.iterrows()):
-        # Numer wiersza w Excelu (nagłówek w wierszu 1, dane od wiersza 2)
-        # WAŻNE: używamy pozycji w df_pelny, nie indeksu DataFrame po filtrowaniu
+    for i, row in df_okno.iterrows():
         excel_row = df.index.get_loc(i) + 2
-        
-        # Sprawdź czy komentarz już istnieje (logika przyrostowa)
         istniejacy = ws_master.range((excel_row, col_letter_offset)).value
         if istniejacy:
-            continue  # Nie nadpisuj
-        
+            continue
         wiersze_do_przetworzenia += 1
-        
         try:
             prompt = buduj_prompt_dzienny(row)
             komentarz = wywolaj_claude(prompt, config)
             ws_master.range((excel_row, col_letter_offset)).value = komentarz
             wiersze_przetworzone += 1
             print(f"✅ {row['Data'].strftime('%Y-%m-%d')} — komentarz zapisany")
-            
         except Exception as e:
             print(f"⚠️ {row['Data'].strftime('%Y-%m-%d')} — błąd API: {e}")
             continue
-    
     print(f"\n✅ Komentarze dzienne: {wiersze_przetworzone}/{wiersze_do_przetworzenia} wierszy")
+    return wiersze_przetworzone
 
 # =============================================================================
 # GŁÓWNA FUNKCJA — WYWOŁYWANA PRZEZ VBA
 # =============================================================================
 
 def generuj_komentarz_ai():
-    """
-    Główna funkcja wywoływana przez makro VBA: GenerujKomentarzAI()
-    
-    Przepływ:
-    1. Połącz z Excelem
-    2. Czytaj konfigurację (w tym DAYS_BACK z suwaka)
-    3. Pobierz dane z qry_MASTER
-    4. Generuj komentarz zbiorczy → AI_Summary (dla Power BI)
-    5. Generuj komentarze dzienne → kolumna Komentarz_AI (przyrostowo)
-    """
     print("=" * 50)
     print("SilesiaPulse — Generowanie komentarzy AI")
     print(f"Start: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 50)
-    
+
     try:
         # Krok 1 — połączenie
         wb = polacz_z_excelem()
         print(f"✅ Połączono z: {wb.name}")
-        
+
         # Krok 2 — konfiguracja
         config = czytaj_config(wb)
         print(f"✅ Konfiguracja: model={config['model']}, days_back={config['days_back']}")
-        
+
         # Krok 3 — dane
         df_pelny, df_okno = pobierz_dane_master(wb, config['days_back'])
         print(f"✅ Pobrano {len(df_okno)} wierszy za ostatnie {config['days_back']} dni")
-        
+
         if df_okno.empty:
             print("⚠️ Brak danych dla wybranego okresu")
             return
-        
+
         # Krok 4 — komentarz zbiorczy
         print("\n→ Generowanie komentarza zbiorczego...")
         agregat = agreguj_dane(df_okno)
         prompt_zbiorczy = buduj_prompt_zbiorczy(agregat)
         komentarz_zbiorczy = wywolaj_claude(prompt_zbiorczy, config)
         zapisz_komentarz_zbiorczy(wb, komentarz_zbiorczy, agregat)
-        
+
         # Krok 5 — komentarze dzienne (przyrostowo)
         print("\n→ Generowanie komentarzy dziennych (przyrostowo)...")
-        zapisz_komentarze_dzienne(wb, df_pelny, df_okno, config)
-        
+        wiersze_przetworzone = zapisz_komentarze_dzienne(wb, df_pelny, df_okno, config)
+
+        # Krok 6 — aktualizacja Panelu (rzeczywiste liczby, nie zakodowane na sztywno)
+        panel = wb.sheets["Panel"]
+        panel["C15"].value = datetime.now().strftime("%Y-%m-%d %H:%M")
+        panel["C16"].value = f"{len(df_okno)} (ostatnie {config['days_back']} dni)"
+
         print("\n" + "=" * 50)
         print("✅ ZAKOŃCZONO POMYŚLNIE")
         print(f"Koniec: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 50)
         print("\n→ Odśwież Power BI aby zobaczyć zaktualizowane komentarze.")
-        
+
     except Exception as e:
         print(f"\n❌ BŁĄD KRYTYCZNY: {e}")
         raise

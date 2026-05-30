@@ -1,0 +1,1970 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<title>SilesiaPulse · Monitor Ryzyka Geopolitycznego</title>
+<meta name="viewport" content="width=1440" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<script>
+// Tweak defaults — host parses & rewrites this block on persist
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "teal",
+  "density": "spacious",
+  "theme": "dark"
+}/*EDITMODE-END*/;
+</script>
+
+<style>
+:root {
+  /* ─── canvas / surfaces ─── */
+  --canvas:        #14141f;
+  --canvas-2:      #1c1c2e;
+  --tile:          #20202f;
+  --tile-2:        #252535;
+  --sidebar:       #181826;
+  --header:        #16161f;
+  --border:        rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.13);
+
+  /* ─── text ─── */
+  --text:          #f5f5fa;
+  --text-2:        #c5c5d2;
+  --text-muted:    #7a7a8d;
+  --text-faint:    #54546a;
+
+  /* ─── accent (driven by Tweaks) ─── */
+  --accent:        #7B61FF;
+  --accent-2:      #9b85ff;
+  --accent-soft:   rgba(123,97,255,0.14);
+  --accent-line:   rgba(123,97,255,0.4);
+
+  /* ─── series ─── */
+  --c-gpr:   #FF6B6B;
+  --c-vix:   #4E9AF1;
+  --c-jsw:   #FFD700;
+  --c-kghm:  #4CAF50;
+  --c-pkn:   #FF9800;
+  --c-wig:   #A78BFA;
+
+  /* ─── semantic ─── */
+  --up:      #ff5d5d;
+  --down:    #4CAF50;
+  --warn:    #F2C94C;
+  --flat:    #8a8a9a;
+
+  /* ─── density ─── */
+  --gap:     14px;
+  --tile-pad: 18px;
+  --row-h:   140px;
+  --chart-h: 320px;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+[data-accent="blue"]   { --accent:#4E9AF1; --accent-2:#7ab3f6; --accent-soft:rgba(78,154,241,.14); --accent-line:rgba(78,154,241,.4); }
+[data-accent="amber"]  { --accent:#F2C94C; --accent-2:#f6da7c; --accent-soft:rgba(242,201,76,.14); --accent-line:rgba(242,201,76,.4); }
+[data-accent="teal"]   { --accent:#22b8b0; --accent-2:#4fcfc8; --accent-soft:rgba(34,184,176,.14); --accent-line:rgba(34,184,176,.4); }
+[data-accent="purple"] { --accent:#7B61FF; --accent-2:#9b85ff; --accent-soft:rgba(123,97,255,.14); --accent-line:rgba(123,97,255,.4); }
+
+[data-density="compact"]      { --gap: 10px; --tile-pad: 12px; --row-h: 120px; --chart-h: 260px; }
+[data-density="comfortable"]  { --gap: 14px; --tile-pad: 18px; --row-h: 140px; --chart-h: 320px; }
+[data-density="spacious"]     { --gap: 20px; --tile-pad: 22px; --row-h: 160px; --chart-h: 360px; }
+
+[data-theme="light"] {
+  --canvas:        #f3f4f7;
+  --canvas-2:      #ffffff;
+  --tile:          #ffffff;
+  --tile-2:        #f8f8fb;
+  --sidebar:       #ffffff;
+  --header:        #ffffff;
+  --border:        rgba(0,0,0,0.07);
+  --border-strong: rgba(0,0,0,0.13);
+  --text:          #14141f;
+  --text-2:        #3a3a4e;
+  --text-muted:    #6d6d80;
+  --text-faint:    #a8a8b8;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--canvas);
+  color: var(--text);
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  font-feature-settings: "cv11", "ss01", "ss03";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body { min-width: 1440px; }
+.mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; font-feature-settings: "tnum", "ss01"; }
+
+/* ───────────────────── APP SHELL ───────────────────── */
+.app { display: grid; grid-template-rows: 56px 1fr 38px 28px; height: 100vh; min-height: 900px; }
+
+/* ── Header ── */
+.header {
+  background: var(--header);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 280px 1fr auto;
+  align-items: center;
+  padding: 0 20px;
+  gap: 28px;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 14px;
+  color: #fff;
+  letter-spacing: -0.02em;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 6px 14px -6px var(--accent);
+}
+.brand-text { line-height: 1.1; }
+.brand-name { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+.brand-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+.nav { display: flex; gap: 2px; }
+.nav-item {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s, color 0.12s;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav-item.active { color: var(--text); background: var(--accent-soft); }
+[data-theme="light"] .nav-item:hover { background: rgba(0,0,0,0.04); }
+
+.header-right { display: flex; align-items: center; gap: 14px; }
+.refresh-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 32px; padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--tile);
+  font-size: 12px; color: var(--text-2);
+}
+.refresh-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--down); box-shadow: 0 0 0 3px rgba(76,175,80,0.18); }
+.icon-btn {
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: 6px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+[data-theme="light"] .icon-btn:hover { background: rgba(0,0,0,0.05); }
+.user-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.user-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a5b, #ff5b8a);
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 600; color: #fff;
+}
+.user-name { font-size: 12px; color: var(--text-2); }
+
+/* ── Main grid ── */
+.main {
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  overflow: hidden;
+}
+
+/* Left rail */
+.rail-left {
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+  gap: 4px;
+}
+.rail-btn {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.12s, color 0.12s;
+}
+.rail-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.rail-btn.active { color: var(--accent); background: var(--accent-soft); }
+.rail-btn.active::before {
+  content: ""; position: absolute; left: -10px; top: 8px; bottom: 8px;
+  width: 3px; border-radius: 0 3px 3px 0; background: var(--accent);
+}
+.rail-divider { width: 24px; height: 1px; background: var(--border); margin: 6px 0; }
+
+/* Right rail */
+.rail-right {
+  background: var(--sidebar);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+  gap: 4px;
+}
+
+/* Canvas */
+.canvas {
+  background: var(--canvas-2);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 22px 24px 28px;
+}
+.canvas::-webkit-scrollbar { width: 8px; }
+.canvas::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 4px; }
+
+/* ── Page header ── */
+.page-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 18px;
+}
+.page-title { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+.page-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+.page-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 8px;
+  font-size: 10px; font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.page-head-right { display: flex; gap: 8px; align-items: center; }
+.btn-ghost {
+  height: 30px; padding: 0 12px;
+  background: var(--tile);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-2);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: border-color 0.12s, color 0.12s;
+}
+.btn-ghost:hover { border-color: var(--border-strong); color: var(--text); }
+
+/* ── Crisis slicer ── */
+.slicer {
+  display: flex; align-items: center; gap: var(--gap);
+  margin-bottom: var(--gap);
+}
+.slicer-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+  padding-right: 4px;
+}
+.crisis-btn {
+  display: flex; flex-direction: column;
+  padding: 9px 14px;
+  background: var(--tile);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  min-width: 140px;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.crisis-btn:hover { border-color: var(--border-strong); }
+.crisis-btn.active {
+  background: linear-gradient(180deg, var(--accent-soft) 0%, var(--tile) 100%);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+.crisis-btn .cb-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.crisis-btn.active .cb-name { color: var(--accent-2); }
+.crisis-btn .cb-range { font-size: 10px; color: var(--text-muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+/* ── KPI row ── */
+.kpi-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: var(--gap);
+  margin-bottom: var(--gap);
+}
+.kpi {
+  background: var(--tile);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--tile-pad);
+  min-height: var(--row-h);
+  position: relative;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.kpi-head { display: flex; align-items: center; justify-content: space-between; }
+.kpi-label {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.kpi-icon {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  display: grid; place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.kpi-value {
+  font-size: 30px; font-weight: 700; letter-spacing: -0.025em;
+  margin-top: 12px; line-height: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: "tnum", "zero", "ss01";
+}
+.kpi-foot {
+  margin-top: auto;
+  padding-top: 10px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 10px;
+}
+.kpi-trend {
+  font-size: 12px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.kpi-trend.up { color: var(--up); }
+.kpi-trend.down { color: var(--down); }
+.kpi-trend.flat { color: var(--flat); }
+.kpi-trend.warn { color: var(--warn); }
+.kpi-spark-wrap { width: 100px; height: 32px; flex-shrink: 0; }
+.kpi-spark { width: 100% !important; height: 100% !important; }
+.kpi-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.kpi-badge.up { background: rgba(255,93,93,0.14); color: var(--up); }
+.kpi-badge.dot::before { content:""; width:6px; height:6px; border-radius:50%; background: currentColor; box-shadow: 0 0 0 3px rgba(255,93,93,0.18); }
+
+/* ── Tile (chart container) ── */
+.tile {
+  background: var(--tile);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--tile-pad);
+  display: flex; flex-direction: column;
+}
+.tile-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.tile-title { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+.tile-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-2); font-family: 'JetBrains Mono', monospace; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+.tile-actions { display: flex; gap: 4px; }
+.tile-action {
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.tile-action:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+[data-theme="light"] .tile-action:hover { background: rgba(0,0,0,0.05); }
+
+.chart-wrap { position: relative; height: var(--chart-h); }
+.chart-wrap.tall { height: calc(var(--chart-h) + 40px); }
+
+/* ── Row layouts ── */
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); margin-bottom: var(--gap); }
+.row-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: var(--gap); margin-bottom: var(--gap); }
+.row-1 { margin-bottom: var(--gap); }
+
+/* ── Causal chain card ── */
+.chain {
+  display: flex; flex-direction: column;
+  gap: 10px;
+}
+.chain-link {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 13px;
+  background: var(--tile-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  position: relative;
+}
+.chain-num {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px; font-weight: 700;
+  display: grid; place-items: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+.chain-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.chain-meta { font-size: 11px; color: var(--text-muted); margin-left: auto; font-family: 'JetBrains Mono', monospace; }
+.chain-arrow {
+  align-self: center; color: var(--text-faint);
+  margin-left: 11px;
+  height: 14px; line-height: 0;
+}
+
+/* ── Matrix ── */
+.matrix-wrap { overflow: hidden; }
+.matrix {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.matrix th, .matrix td {
+  padding: 10px 0;
+  text-align: center;
+  border-radius: 5px;
+  font-weight: 500;
+}
+.matrix th {
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.matrix th.row-h { text-align: right; padding-right: 10px; }
+.matrix td.label {
+  color: var(--text-muted); font-size: 11px; text-align: right; padding-right: 10px;
+  letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600;
+  background: transparent;
+}
+.matrix td.diag { background: rgba(255,255,255,0.04); color: var(--text); font-weight: 600; }
+[data-theme="light"] .matrix td.diag { background: rgba(0,0,0,0.05); }
+
+/* ── AI chat ── */
+.chat {
+  display: flex; flex-direction: column;
+  gap: 14px;
+  padding-right: 4px;
+  overflow-y: auto;
+  max-height: 520px;
+}
+.chat::-webkit-scrollbar { width: 6px; }
+.chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 3px; }
+.msg { display: flex; gap: 10px; align-items: flex-start; }
+.msg.user { flex-direction: row-reverse; }
+.avatar {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.avatar.ai {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  color: #fff;
+}
+.avatar.user {
+  background: var(--tile-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.bubble {
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+  max-width: 88%;
+}
+.msg.ai .bubble { background: var(--tile-2); border: 1px solid var(--border); border-top-left-radius: 3px; }
+.msg.user .bubble { background: var(--accent-soft); border: 1px solid var(--accent-line); color: var(--text); border-top-right-radius: 3px; }
+.bubble strong { color: var(--text); font-weight: 600; }
+.bubble .mono { font-size: 11.5px; color: var(--accent-2); }
+.bubble code {
+  background: rgba(255,255,255,0.05); padding: 1px 5px; border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--accent-2);
+}
+[data-theme="light"] .bubble code { background: rgba(0,0,0,0.05); }
+.msg-meta { font-size: 10px; color: var(--text-faint); margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+.chat-composer {
+  margin-top: 12px;
+  display: flex; gap: 8px;
+  padding: 8px;
+  background: var(--tile-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.chat-composer input {
+  flex: 1;
+  background: transparent;
+  border: 0; outline: none;
+  color: var(--text);
+  font: inherit; font-size: 12.5px;
+  padding: 4px 6px;
+}
+.chat-composer input::placeholder { color: var(--text-faint); }
+.chat-composer input:disabled { opacity: 0.5; }
+.chat-send { transition: background 0.12s; }
+.chat-send:hover { background: var(--accent-2); }
+.chat-send.busy { background: var(--text-faint); cursor: wait; pointer-events: none; }
+
+.quick-actions {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-top: 12px;
+  padding-bottom: 2px;
+}
+.quick-action {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px;
+  background: var(--tile-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 11px; font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  font-family: inherit;
+}
+.quick-action:hover { border-color: var(--accent-line); color: var(--accent-2); }
+.quick-action svg { color: var(--accent); }
+.quick-action:disabled { opacity: 0.45; cursor: wait; }
+
+.typing { display: inline-flex; align-items: center; gap: 4px; }
+.typing span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+.typing span:nth-child(2) { animation-delay: 0.15s; }
+.typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+.chat-send {
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  background: var(--accent);
+  border-radius: 7px;
+  cursor: pointer;
+  color: #fff;
+}
+
+/* ── Page tabs (bottom) ── */
+.tabs {
+  background: var(--header);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 4px;
+  overflow-x: auto;
+}
+.tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0 14px;
+  height: 38px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  border-radius: 6px 6px 0 0;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.12s, background 0.12s;
+}
+.tab .tab-icon { width: 14px; height: 14px; opacity: 0.8; }
+.tab:hover { color: var(--text-2); }
+.tab.active {
+  color: var(--text);
+  background: var(--canvas-2);
+}
+.tab.active::after {
+  content: ""; position: absolute; left: 8px; right: 8px; bottom: 0; height: 2px;
+  background: var(--accent); border-radius: 2px 2px 0 0;
+}
+.tab-add {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border-radius: 5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: 4px;
+}
+.tab-add:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+[data-theme="light"] .tab-add:hover { background: rgba(0,0,0,0.05); }
+
+/* ── Status bar ── */
+.status {
+  background: var(--header);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 18px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.status-item { display: inline-flex; align-items: center; gap: 6px; }
+.status-divider { width: 1px; height: 14px; background: var(--border); }
+.status-right { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+
+/* ── Page switching ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Tweaks panel ── */
+.tw {
+  position: fixed; right: 76px; bottom: 80px;
+  width: 260px;
+  background: var(--header);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 18px 50px -10px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  z-index: 50;
+  display: none;
+  font-size: 12px;
+}
+.tw.open { display: block; }
+.tw-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.tw-title { font-weight: 600; letter-spacing: -0.01em; font-size: 13px; }
+.tw-close { cursor: pointer; color: var(--text-muted); }
+.tw-close:hover { color: var(--text); }
+.tw-section { margin-bottom: 14px; }
+.tw-section:last-child { margin-bottom: 0; }
+.tw-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; }
+.tw-swatches { display: flex; gap: 8px; }
+.tw-swatch {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  display: grid; place-items: center;
+  transition: transform 0.12s;
+}
+.tw-swatch:hover { transform: translateY(-1px); }
+.tw-swatch.sel { border-color: var(--text); }
+.tw-swatch-inner { width: 20px; height: 20px; border-radius: 4px; }
+.tw-seg {
+  display: flex;
+  background: var(--tile);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 3px;
+}
+.tw-seg-opt {
+  flex: 1; padding: 6px 8px;
+  text-align: center; font-size: 11px; font-weight: 500;
+  border-radius: 5px; cursor: pointer;
+  color: var(--text-muted);
+}
+.tw-seg-opt.sel { background: var(--accent-soft); color: var(--accent); }
+
+</style>
+</head>
+<body>
+
+<div class="app" id="app" data-accent="purple" data-density="comfortable" data-theme="dark" data-screen-label="SilesiaPulse Dashboard">
+
+  <!-- ─────────────────── HEADER ─────────────────── -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-mark">SP</div>
+      <div class="brand-text">
+        <div class="brand-name">SilesiaPulse</div>
+        <div class="brand-sub">UEK · Katowice · v1.0</div>
+      </div>
+    </div>
+    <nav class="nav" id="topnav">
+      <div class="nav-item active" data-section="dashboard">Dashboard</div>
+      <div class="nav-item" data-section="model">Model</div>
+      <div class="nav-item" data-section="dane">Dane</div>
+      <div class="nav-item" data-section="ustawienia">Ustawienia</div>
+    </nav>
+    <div class="header-right">
+      <div class="refresh-pill">
+        <span class="refresh-dot"></span>
+        <span>Odświeżono <span class="mono">27.05.2026 · 10:30</span></span>
+      </div>
+      <div class="icon-btn" title="Wyszukaj">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </div>
+      <div class="icon-btn" title="Powiadomienia">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      </div>
+      <div class="user-chip">
+        <div class="user-avatar">RB</div>
+        <div class="user-name">R. Baraniecki</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─────────────────── MAIN ─────────────────── -->
+  <div class="main">
+    <!-- Left rail -->
+    <aside class="rail-left">
+      <div class="rail-btn active" title="Raport">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <div class="rail-btn" title="Model">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/></svg>
+      </div>
+      <div class="rail-btn" title="Tabele">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+      </div>
+      <div class="rail-divider"></div>
+      <div class="rail-btn" title="Miary DAX">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+      </div>
+      <div class="rail-btn" title="Relacje">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><path d="M9 12h6"/></svg>
+      </div>
+    </aside>
+
+    <!-- Canvas -->
+    <main class="canvas" id="canvas">
+
+      <!-- ════════════ PAGE 1 ════════════ -->
+      <section class="page active" id="page1" data-screen-label="01 Ryzyko & KPI">
+
+        <div class="page-head">
+          <div>
+            <div class="page-tag">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+              Live · qry_MASTER
+            </div>
+            <div class="page-title">Monitor Ryzyka Geopolitycznego</div>
+            <div class="page-sub">Śląsk · 1 604 rekordy · 02.01.2020 — 27.05.2026</div>
+          </div>
+          <div class="page-head-right">
+            <button class="btn-ghost">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 22v-6h6M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 2v6h-6"/></svg>
+              Odśwież
+            </button>
+            <button class="btn-ghost">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+              Eksport
+            </button>
+            <button class="btn-ghost" id="tweaks-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Crisis slicer -->
+        <div class="slicer">
+          <div class="slicer-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Slicer · Kryzys
+          </div>
+          <div class="crisis-btn" data-crisis="covid">
+            <div class="cb-name">COVID-19</div>
+            <div class="cb-range">2020-03-01 → 2020-06-30</div>
+          </div>
+          <div class="crisis-btn" data-crisis="ukraine">
+            <div class="cb-name">Inwazja Ukraina</div>
+            <div class="cb-range">2022-02-24 → 2022-09-30</div>
+          </div>
+          <div class="crisis-btn" data-crisis="black-sat">
+            <div class="cb-name">Czarna Sobota</div>
+            <div class="cb-range">2023-10-07 → 2024-01-31</div>
+          </div>
+          <div class="crisis-btn active" data-crisis="epic-fury">
+            <div class="cb-name">Operacja Epic Fury</div>
+            <div class="cb-range">2026-02-01 → 2026-05-27</div>
+          </div>
+        </div>
+
+        <!-- KPI row -->
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="kpi-head">
+              <div class="kpi-label">GPR Index</div>
+              <div class="kpi-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value">187.3</div>
+            <div class="kpi-foot">
+              <div class="kpi-trend up">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 7-7 7 7M12 5v14"/></svg>
+                +12.4%
+              </div>
+              <div class="kpi-spark-wrap"><canvas class="kpi-spark" id="sp-gpr"></canvas></div>
+            </div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-head">
+              <div class="kpi-label">Avg VIX · 30d</div>
+              <div class="kpi-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value">23.7</div>
+            <div class="kpi-foot">
+              <div class="kpi-trend warn">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 7-7 7 7M12 5v14"/></svg>
+                +3.1 pt
+              </div>
+              <div class="kpi-spark-wrap"><canvas class="kpi-spark" id="sp-vix"></canvas></div>
+            </div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-head">
+              <div class="kpi-label">USD / PLN</div>
+              <div class="kpi-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 18V6"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value">4.2847</div>
+            <div class="kpi-foot">
+              <div class="kpi-trend flat">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg>
+                +0.3%
+              </div>
+              <div class="kpi-spark-wrap"><canvas class="kpi-spark" id="sp-usd"></canvas></div>
+            </div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-head">
+              <div class="kpi-label">Risk Label · DAX</div>
+              <div class="kpi-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value" style="font-size:18px; margin-top:18px;">RYZYKO ROŚNIE</div>
+            <div class="kpi-foot">
+              <div class="kpi-badge up dot">+1</div>
+              <div class="kpi-spark-wrap"><canvas class="kpi-spark" id="sp-risk"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wykres 1: GPR & VIX -->
+        <div class="row-1">
+          <div class="tile">
+            <div class="tile-head">
+              <div>
+                <div class="tile-title">GPR Index vs VIX — łańcuch sygnałów wyprzedzających</div>
+                <div class="tile-sub">qry_MASTER · 02.01.2020 — 27.05.2026 · skala mies.</div>
+              </div>
+              <div style="display:flex; gap:14px; align-items:center;">
+                <div class="legend">
+                  <div class="legend-item"><span class="legend-dot" style="background:var(--c-gpr)"></span>GPR Index (lewa)</div>
+                  <div class="legend-item"><span class="legend-dot" style="background:var(--c-vix)"></span>VIX (prawa)</div>
+                </div>
+                <div class="tile-actions">
+                  <div class="tile-action"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+                  <div class="tile-action"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="chart-gpr-vix"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Wykres 2 + Chain -->
+        <div class="row-3-1">
+          <div class="tile">
+            <div class="tile-head">
+              <div>
+                <div class="tile-title">JSW · KGHM · PKN · WIG20 — reakcja na ryzyko geopolityczne</div>
+                <div class="tile-sub">Zamknięcie miesięczne · indeks bazowy 02.01.2020 = 100</div>
+              </div>
+              <div style="display:flex; gap:14px; align-items:center;">
+                <div class="legend">
+                  <div class="legend-item"><span class="legend-dot" style="background:var(--c-jsw)"></span>JSW</div>
+                  <div class="legend-item"><span class="legend-dot" style="background:var(--c-kghm)"></span>KGHM</div>
+                  <div class="legend-item"><span class="legend-dot" style="background:var(--c-pkn)"></span>PKN</div>
+                  <div class="legend-item"><span class="legend-dot" style="background:var(--c-wig)"></span>WIG20</div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="chart-stocks"></canvas></div>
+          </div>
+
+          <div class="tile">
+            <div class="tile-head">
+              <div>
+                <div class="tile-title">Łańcuch przyczynowy</div>
+                <div class="tile-sub">model logiczny SilesiaPulse</div>
+              </div>
+            </div>
+            <div class="chain">
+              <div class="chain-link">
+                <div class="chain-num">01</div>
+                <div>
+                  <div class="chain-name">GPR Index</div>
+                  <div class="chain-meta" style="margin:0">sygnał geopolityczny</div>
+                </div>
+                <div class="chain-meta">+12.4%</div>
+              </div>
+              <div class="chain-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              </div>
+              <div class="chain-link">
+                <div class="chain-num">02</div>
+                <div>
+                  <div class="chain-name">VIX · USD/PLN</div>
+                  <div class="chain-meta" style="margin:0">transmisja na rynki FX</div>
+                </div>
+                <div class="chain-meta">+3.1 · +0.3%</div>
+              </div>
+              <div class="chain-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              </div>
+              <div class="chain-link">
+                <div class="chain-num">03</div>
+                <div>
+                  <div class="chain-name">JSW · KGHM · PKN</div>
+                  <div class="chain-meta" style="margin:0">spółki śląskie</div>
+                </div>
+                <div class="chain-meta">-2.8% śr.</div>
+              </div>
+              <div class="chain-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+              </div>
+              <div class="chain-link">
+                <div class="chain-num">04</div>
+                <div>
+                  <div class="chain-name">WIG20</div>
+                  <div class="chain-meta" style="margin:0">reakcja zagregowana</div>
+                </div>
+                <div class="chain-meta">-1.4%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ════════════ PAGE 2 ════════════ -->
+      <section class="page" id="page2" data-screen-label="02 Korelacje & AI">
+
+        <div class="page-head">
+          <div>
+            <div class="page-tag">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+              Analiza · Pearson r
+            </div>
+            <div class="page-title">Korelacje &amp; Komentarz AI</div>
+            <div class="page-sub">Okres: Czarna Sobota · 2023-10-07 → 2024-01-31 · n = 118</div>
+          </div>
+          <div class="page-head-right">
+            <button class="btn-ghost">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 6-6"/></svg>
+              Recalculate
+            </button>
+            <button class="btn-ghost">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+              Eksport
+            </button>
+          </div>
+        </div>
+
+        <!-- Crisis slicer (page 2) -->
+        <div class="slicer">
+          <div class="slicer-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Slicer · Kryzys
+          </div>
+          <div class="crisis-btn p2" data-crisis="covid">
+            <div class="cb-name">COVID-19</div>
+            <div class="cb-range">2020-03-01 → 2020-06-30</div>
+          </div>
+          <div class="crisis-btn p2" data-crisis="ukraine">
+            <div class="cb-name">Inwazja Ukraina</div>
+            <div class="cb-range">2022-02-24 → 2022-09-30</div>
+          </div>
+          <div class="crisis-btn p2 active" data-crisis="black-sat">
+            <div class="cb-name">Czarna Sobota</div>
+            <div class="cb-range">2023-10-07 → 2024-01-31</div>
+          </div>
+          <div class="crisis-btn p2" data-crisis="epic-fury">
+            <div class="cb-name">Operacja Epic Fury</div>
+            <div class="cb-range">2026-02-01 → 2026-05-27</div>
+          </div>
+        </div>
+
+        <div class="row-2">
+          <!-- Matrix -->
+          <div class="tile">
+            <div class="tile-head">
+              <div>
+                <div class="tile-title">Macierz korelacji Pearsona</div>
+                <div class="tile-sub">r ∈ [-1, +1] · gradient: czerwony (ujemny) ↔ zielony (dodatni)</div>
+              </div>
+              <div class="legend">
+                <div class="legend-item"><span class="legend-dot" style="background:#d94343"></span>-1.0</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#3a3a4e"></span>0.0</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#4CAF50"></span>+1.0</div>
+              </div>
+            </div>
+            <div class="matrix-wrap" id="matrix-wrap"></div>
+          </div>
+
+          <!-- Scatter -->
+          <div class="tile">
+            <div class="tile-head">
+              <div>
+                <div class="tile-title">GPR Index × WIG20 · 6-tyg. lag</div>
+                <div class="tile-sub">scatter · linia regresji · r = -0.41</div>
+              </div>
+              <div class="legend">
+                <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>obserwacja</div>
+                <div class="legend-item"><span class="legend-dot" style="background:var(--c-gpr)"></span>regresja OLS</div>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="chart-scatter"></canvas></div>
+          </div>
+        </div>
+
+        <div class="row-1">
+          <!-- AI chat -->
+          <div class="tile">
+            <div class="tile-head">
+              <div>
+                <div class="tile-title">Komentarz AI · Komentarz_AI</div>
+                <div class="tile-sub">model: claude-sonnet-4-6 · kontekst: qry_MASTER + slicer</div>
+              </div>
+              <div class="legend">
+                <div class="legend-item"><span class="legend-dot" style="background:var(--down)"></span>online</div>
+              </div>
+            </div>
+            <div class="chat" id="chat">
+              <div class="msg user">
+                <div class="avatar user">RB</div>
+                <div>
+                  <div class="bubble">Co się stało z GPR Index podczas Czarnej Soboty i jak zareagowały śląskie spółki?</div>
+                  <div class="msg-meta" style="text-align:right">10:27 · slicer: Czarna Sobota</div>
+                </div>
+              </div>
+
+              <div class="msg ai">
+                <div class="avatar ai">AI</div>
+                <div>
+                  <div class="bubble">
+                    Gwałtowny wzrost <strong>GPR Index</strong> do <code>187.3 pkt</code> po ataku 7 października 2023 sygnalizował podwyższone ryzyko geopolityczne z <strong>6-tygodniowym wyprzedzeniem</strong> względem reakcji WIG20.
+                    <br><br>
+                    W oknie <span class="mono">2023-10-07 → 2024-01-31</span> (n = 118 sesji) korelacje ujemne ze spółkami śląskimi wyniosły:
+                    <br>
+                    <code>JSW: -0.43</code> &nbsp; <code>KGHM: -0.51</code> &nbsp; <code>PKN: -0.39</code>
+                    <br><br>
+                    Potwierdza to zależność ekspozycji śląskiego przemysłu na szoki zewnętrzne — szczególnie sektora miedziowego (KGHM, |r| = 0.51).
+                  </div>
+                  <div class="msg-meta">10:28 · 1 240 tok · qry_MASTER</div>
+                </div>
+              </div>
+
+              <div class="msg user">
+                <div class="avatar user">RB</div>
+                <div>
+                  <div class="bubble">Co rekomendujesz na wypadek dalszego wzrostu GPR?</div>
+                  <div class="msg-meta" style="text-align:right">10:29</div>
+                </div>
+              </div>
+
+              <div class="msg ai">
+                <div class="avatar ai">AI</div>
+                <div>
+                  <div class="bubble">
+                    <strong>Rekomendacja:</strong> wzmożona obserwacja notowań <code>KGHM</code> i <code>PKN</code> w przypadku dalszego wzrostu GPR powyżej <code>200 pkt</code>.
+                    <br><br>
+                    Sugerowane progi alertów (do dodania jako miary DAX):
+                    <br>
+                    • <code>GPR &gt; 200</code> &nbsp;→&nbsp; status <span style="color:var(--warn)">WATCH</span>
+                    <br>
+                    • <code>GPR &gt; 250 &amp;&amp; VIX &gt; 30</code> &nbsp;→&nbsp; status <span style="color:var(--up)">ALERT</span>
+                    <br>
+                    • <code>Risk Label = +1</code> przez 3 kolejne mies. &nbsp;→&nbsp; rebalansacja portfela ślaskich aktywów (proponowany cap: 35%)
+                  </div>
+                  <div class="msg-meta">10:30 · 1 612 tok · n=118</div>
+                </div>
+              </div>
+            </div>
+            <div class="quick-actions" id="quick-actions">
+              <button class="quick-action" data-action="diagnoza">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                Diagnoza
+              </button>
+              <button class="quick-action" data-action="korelacje">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><path d="M10 10l4 4"/></svg>
+                Korelacje
+              </button>
+              <button class="quick-action" data-action="rekomendacja">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6M12 22v-6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M22 12h-6M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/></svg>
+                Rekomendacja
+              </button>
+              <button class="quick-action" data-action="interpretacja">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                Wyjaśnij KPI
+              </button>
+            </div>
+            <div class="chat-composer">
+              <input id="chat-input" placeholder="Zadaj pytanie analitykowi AI (Enter → wyślij)…" />
+              <div class="chat-send" id="chat-send">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Right rail -->
+    <aside class="rail-right">
+      <div class="rail-btn" title="Filtry">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      </div>
+      <div class="rail-btn" title="Wizualizacje">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </div>
+      <div class="rail-btn" title="Pola">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </div>
+      <div class="rail-divider"></div>
+      <div class="rail-btn" title="Format">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12a10 10 0 1 0 20 0 10 10 0 0 0-20 0Z"/><path d="M12 2v20M2 12h20"/></svg>
+      </div>
+      <div class="rail-btn" title="Komentarze">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ─────────────────── PAGE TABS ─────────────────── -->
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-page="page1">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+      Strona 1 · Ryzyko &amp; KPI
+    </div>
+    <div class="tab" data-page="page2">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 6-6"/></svg>
+      Strona 2 · Korelacje &amp; AI
+    </div>
+    <div class="tab-add">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    </div>
+  </div>
+
+  <!-- ─────────────────── STATUS BAR ─────────────────── -->
+  <div class="status">
+    <div class="status-item">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      Widok: Układ strony
+    </div>
+    <div class="status-divider"></div>
+    <div class="status-item">Powiększenie: 100%</div>
+    <div class="status-divider"></div>
+    <div class="status-item">qry_MASTER · 1 604 wierszy</div>
+    <div class="status-divider"></div>
+    <div class="status-item">qry_Kalendarz · 2 338 wierszy</div>
+    <div class="status-right">
+      <div class="status-item">Miary DAX: 5/5 aktywne</div>
+      <div class="status-divider"></div>
+      <div class="status-item" style="color:var(--down)">● Połączono z modelem</div>
+      <div class="status-divider"></div>
+      <div class="status-item">Odśwież: 27.05.2026 · 10:30</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─────────────────── TWEAKS PANEL ─────────────────── -->
+<div class="tw" id="tw">
+  <div class="tw-head">
+    <div class="tw-title">Tweaks</div>
+    <div class="tw-close" id="tw-close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </div>
+  </div>
+  <div class="tw-section">
+    <div class="tw-label">Akcent</div>
+    <div class="tw-swatches" id="tw-accent">
+      <div class="tw-swatch" data-val="purple"><div class="tw-swatch-inner" style="background:#7B61FF"></div></div>
+      <div class="tw-swatch" data-val="blue"><div class="tw-swatch-inner" style="background:#4E9AF1"></div></div>
+      <div class="tw-swatch" data-val="teal"><div class="tw-swatch-inner" style="background:#22b8b0"></div></div>
+      <div class="tw-swatch" data-val="amber"><div class="tw-swatch-inner" style="background:#F2C94C"></div></div>
+    </div>
+  </div>
+  <div class="tw-section">
+    <div class="tw-label">Gęstość</div>
+    <div class="tw-seg" id="tw-density">
+      <div class="tw-seg-opt" data-val="compact">Compact</div>
+      <div class="tw-seg-opt" data-val="comfortable">Comfort</div>
+      <div class="tw-seg-opt" data-val="spacious">Spacious</div>
+    </div>
+  </div>
+  <div class="tw-section">
+    <div class="tw-label">Motyw</div>
+    <div class="tw-seg" id="tw-theme">
+      <div class="tw-seg-opt" data-val="dark">Ciemny</div>
+      <div class="tw-seg-opt" data-val="light">Jasny</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ───────────────────────────────────────────────────────────────
+   SilesiaPulse · data + Chart.js render
+   ─────────────────────────────────────────────────────────────── */
+
+const CSS = (k) => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+
+/* ── Crisis windows ── */
+const CRISES = [
+  { id: "covid",     name: "COVID-19",      start: "2020-03-01", end: "2020-06-30", peakGpr: 252, peakVix: 65 },
+  { id: "ukraine",   name: "Inwazja UA",    start: "2022-02-24", end: "2022-09-30", peakGpr: 285, peakVix: 38 },
+  { id: "black-sat", name: "Czarna Sobota", start: "2023-10-07", end: "2024-01-31", peakGpr: 188, peakVix: 28 },
+  { id: "epic-fury", name: "Epic Fury",     start: "2026-02-01", end: "2026-05-27", peakGpr: 211, peakVix: 32 },
+];
+
+/* ── Deterministic pseudo-random (so chart reproduces) ── */
+function mulberry32(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rng = mulberry32(42);
+
+/* ── Build monthly series, Jan 2020 → May 2026 ── */
+function monthRange(startY, startM, endY, endM) {
+  const out = [];
+  let y = startY, m = startM;
+  while (y < endY || (y === endY && m <= endM)) {
+    out.push(new Date(y, m, 1));
+    m++;
+    if (m === 12) { m = 0; y++; }
+  }
+  return out;
+}
+const months = monthRange(2020, 0, 2026, 4);
+
+function inCrisis(date) {
+  for (const c of CRISES) {
+    const s = new Date(c.start), e = new Date(c.end);
+    if (date >= s && date <= e) return c;
+  }
+  return null;
+}
+function crisisProximity(date) {
+  // returns object with proximity to each crisis (0..1, 1 = peak inside window)
+  let best = null;
+  for (const c of CRISES) {
+    const s = new Date(c.start).getTime();
+    const e = new Date(c.end).getTime();
+    const t = date.getTime();
+    const mid = (s + e) / 2;
+    const half = (e - s) / 2;
+    // bell-shaped: 1 at mid, decaying outside ±2*half
+    const dist = Math.abs(t - mid);
+    const sigma = half * 1.8;
+    const w = Math.exp(-(dist * dist) / (2 * sigma * sigma));
+    if (!best || w > best.w) best = { c, w };
+  }
+  return best;
+}
+
+/* ── GPR Index series ── */
+const GPR_BASE = 95;
+const VIX_BASE = 16;
+const seriesGPR = [];
+const seriesVIX = [];
+months.forEach((d, i) => {
+  const prox = crisisProximity(d);
+  const baseDrift = 95 + Math.sin(i / 8) * 6;
+  const noise = (rng() - 0.5) * 14;
+  const gpr = baseDrift + (prox.c.peakGpr - GPR_BASE) * prox.w + noise;
+  seriesGPR.push(Math.max(40, gpr));
+
+  const vBase = VIX_BASE + Math.sin(i / 5) * 2.5;
+  const vNoise = (rng() - 0.5) * 4;
+  const vix = vBase + (prox.c.peakVix - VIX_BASE) * prox.w + vNoise;
+  seriesVIX.push(Math.max(9, vix));
+});
+
+/* ── Stocks (indexed to 100 at start) ── */
+function buildStock(seed, drift, sensitivity) {
+  const r = mulberry32(seed);
+  let val = 100;
+  return months.map((d, i) => {
+    const prox = crisisProximity(d);
+    const shock = -prox.w * 18 * sensitivity + (r() - 0.5) * 4;
+    val += drift + shock * 0.6 + (r() - 0.5) * 2.5;
+    // mean revert slightly
+    val += (100 - val) * 0.015;
+    return Math.max(45, val);
+  });
+}
+const seriesJSW  = buildStock(11, 0.22, 1.2);
+const seriesKGHM = buildStock(22, 0.30, 1.05);
+const seriesPKN  = buildStock(33, 0.35, 0.85);
+const seriesWIG  = buildStock(44, 0.28, 0.75);
+
+const labels = months.map(d => {
+  const m = ['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'][d.getMonth()];
+  return `${m} ${String(d.getFullYear()).slice(2)}`;
+});
+
+/* ────────────────── Chart.js global tweaks ────────────────── */
+Chart.defaults.font.family = "'Inter', 'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = CSS('--text-muted');
+Chart.defaults.borderColor = CSS('--border');
+
+/* ────────────────── Sparklines ────────────────── */
+function sparkline(id, data, color) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map((_, i) => i),
+      datasets: [{
+        data,
+        borderColor: color,
+        backgroundColor: (c) => {
+          const g = c.chart.ctx.createLinearGradient(0, 0, 0, 40);
+          g.addColorStop(0, color + '55');
+          g.addColorStop(1, color + '00');
+          return g;
+        },
+        fill: true,
+        tension: 0.35,
+        borderWidth: 1.5,
+        pointRadius: 0,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: { x: { display: false }, y: { display: false } },
+      elements: { line: { capBezierPoints: true } },
+    },
+  });
+}
+
+/* ────────────────── Crisis vertical-line plugin ────────────────── */
+const crisisLinePlugin = {
+  id: 'crisisLines',
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea: area, scales: { x } } = chart;
+    if (!x) return;
+    CRISES.forEach((c, i) => {
+      // find approximate label index for crisis midpoint
+      const sd = new Date(c.start), ed = new Date(c.end);
+      const mid = new Date((sd.getTime() + ed.getTime()) / 2);
+      const idx = months.findIndex(m => m.getFullYear() === mid.getFullYear() && m.getMonth() === mid.getMonth());
+      if (idx < 0) return;
+      const px = x.getPixelForValue(idx);
+      ctx.save();
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px, area.top);
+      ctx.lineTo(px, area.bottom);
+      ctx.stroke();
+      ctx.restore();
+
+      // label
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = "600 9.5px 'JetBrains Mono', monospace";
+      ctx.textAlign = 'center';
+      ctx.fillText(c.name.toUpperCase(), px, area.top + 11);
+      ctx.restore();
+    });
+  },
+};
+
+/* ────────────────── Main charts ────────────────── */
+function renderGprVix() {
+  const ctx = document.getElementById('chart-gpr-vix');
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'GPR Index',
+          data: seriesGPR,
+          borderColor: CSS('--c-gpr'),
+          backgroundColor: (c) => {
+            const g = c.chart.ctx.createLinearGradient(0, 0, 0, 320);
+            g.addColorStop(0, CSS('--c-gpr') + '40');
+            g.addColorStop(1, CSS('--c-gpr') + '00');
+            return g;
+          },
+          fill: true,
+          tension: 0.32,
+          borderWidth: 1.8,
+          pointRadius: 0,
+          yAxisID: 'y',
+        },
+        {
+          label: 'VIX',
+          data: seriesVIX,
+          borderColor: CSS('--c-vix'),
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.32,
+          borderWidth: 1.8,
+          pointRadius: 0,
+          yAxisID: 'y1',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f0f18', titleColor: '#fff', bodyColor: '#c5c5d2',
+          borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10,
+          displayColors: true, boxPadding: 4,
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)', drawTicks: false },
+          ticks: { color: CSS('--text-muted'), maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+          border: { display: false },
+        },
+        y: {
+          position: 'left',
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: CSS('--text-muted'), padding: 6 },
+          border: { display: false },
+          title: { display: true, text: 'GPR', color: CSS('--text-muted'), font: { size: 10 } },
+        },
+        y1: {
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          ticks: { color: CSS('--text-muted'), padding: 6 },
+          border: { display: false },
+          title: { display: true, text: 'VIX', color: CSS('--text-muted'), font: { size: 10 } },
+          min: 0, max: 80,
+        },
+      },
+    },
+    plugins: [crisisLinePlugin],
+  });
+}
+
+function renderStocks() {
+  const ctx = document.getElementById('chart-stocks');
+  const ds = (label, data, color) => ({
+    label, data, borderColor: color,
+    backgroundColor: 'transparent', fill: false,
+    tension: 0.32, borderWidth: 1.6, pointRadius: 0,
+  });
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        ds('JSW',  seriesJSW,  CSS('--c-jsw')),
+        ds('KGHM', seriesKGHM, CSS('--c-kghm')),
+        ds('PKN',  seriesPKN,  CSS('--c-pkn')),
+        ds('WIG20',seriesWIG,  CSS('--c-wig')),
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f0f18', titleColor: '#fff', bodyColor: '#c5c5d2',
+          borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10,
+        },
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: CSS('--text-muted'), maxTicksLimit: 12 }, border: { display: false } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: CSS('--text-muted'), padding: 6, callback: v => v.toFixed(0) }, border: { display: false } },
+      },
+    },
+    plugins: [crisisLinePlugin],
+  });
+}
+
+/* ────────────────── Scatter (page 2) ────────────────── */
+function renderScatter() {
+  const r = mulberry32(99);
+  const pts = [];
+  // GPR x WIG20-change, negative correlation
+  for (let i = 0; i < 80; i++) {
+    const gpr = 70 + r() * 220;
+    const noise = (r() - 0.5) * 16;
+    const wigChg = 8 - (gpr - 100) * 0.045 + noise;
+    pts.push({ x: gpr, y: wigChg });
+  }
+  // regression line for r=-0.41
+  const xs = pts.map(p => p.x);
+  const ys = pts.map(p => p.y);
+  const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const mx = mean(xs), my = mean(ys);
+  let num = 0, den = 0;
+  for (let i = 0; i < pts.length; i++) {
+    num += (xs[i] - mx) * (ys[i] - my);
+    den += (xs[i] - mx) ** 2;
+  }
+  const slope = num / den;
+  const intercept = my - slope * mx;
+  const lineX = [60, 320];
+  const linePts = lineX.map(x => ({ x, y: slope * x + intercept }));
+
+  const ctx = document.getElementById('chart-scatter');
+  return new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'obs',
+          data: pts,
+          backgroundColor: CSS('--accent') + 'cc',
+          borderColor: CSS('--accent'),
+          borderWidth: 0,
+          pointRadius: 3.5,
+          pointHoverRadius: 5,
+        },
+        {
+          type: 'line',
+          label: 'OLS',
+          data: linePts,
+          borderColor: CSS('--c-gpr'),
+          borderWidth: 1.8,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f0f18', titleColor: '#fff', bodyColor: '#c5c5d2',
+          borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10,
+          callbacks: { label: (c) => `GPR ${c.parsed.x.toFixed(1)} · ΔWIG ${c.parsed.y.toFixed(2)}%` },
+        },
+      },
+      scales: {
+        x: {
+          type: 'linear', min: 60, max: 320,
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: CSS('--text-muted'), padding: 6 },
+          border: { display: false },
+          title: { display: true, text: 'GPR Index', color: CSS('--text-muted'), font: { size: 10 } },
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: CSS('--text-muted'), padding: 6, callback: v => v + '%' },
+          border: { display: false },
+          title: { display: true, text: 'Δ WIG20 · 6-tyg.', color: CSS('--text-muted'), font: { size: 10 } },
+        },
+      },
+    },
+  });
+}
+
+/* ────────────────── Correlation matrix ────────────────── */
+const MATRIX = {
+  labels: ['GPR', 'VIX', 'USD/PLN', 'JSW', 'KGHM', 'PKN'],
+  values: [
+    [ 1.00,  0.67,  0.58, -0.43, -0.51, -0.39],
+    [ 0.67,  1.00,  0.71, -0.62, -0.58, -0.44],
+    [ 0.58,  0.71,  1.00, -0.38, -0.44, -0.31],
+    [-0.43, -0.62, -0.38,  1.00,  0.82,  0.76],
+    [-0.51, -0.58, -0.44,  0.82,  1.00,  0.79],
+    [-0.39, -0.44, -0.31,  0.76,  0.79,  1.00],
+  ],
+};
+function corrColor(r) {
+  // -1 → red, 0 → neutral, +1 → green
+  if (r > 0) {
+    const a = Math.min(1, r);
+    // mix neutral (#3a3a4e) → green (#4CAF50)
+    return mix('#3a3a4e', '#4CAF50', a);
+  } else {
+    const a = Math.min(1, -r);
+    return mix('#3a3a4e', '#d94343', a);
+  }
+}
+function mix(a, b, t) {
+  const ah = a.replace('#', ''), bh = b.replace('#', '');
+  const ar = parseInt(ah.slice(0, 2), 16), ag = parseInt(ah.slice(2, 4), 16), ab = parseInt(ah.slice(4, 6), 16);
+  const br = parseInt(bh.slice(0, 2), 16), bg = parseInt(bh.slice(2, 4), 16), bb = parseInt(bh.slice(4, 6), 16);
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return `rgb(${r},${g},${bl})`;
+}
+function textOnCorr(r) {
+  return Math.abs(r) > 0.55 ? '#ffffff' : '#e8e8f0';
+}
+function renderMatrix() {
+  const wrap = document.getElementById('matrix-wrap');
+  if (!wrap) return;
+  let html = '<table class="matrix"><thead><tr><th class="row-h"></th>';
+  MATRIX.labels.forEach(l => { html += `<th>${l}</th>`; });
+  html += '</tr></thead><tbody>';
+  MATRIX.values.forEach((row, i) => {
+    html += `<tr><td class="label">${MATRIX.labels[i]}</td>`;
+    row.forEach((v, j) => {
+      if (i === j) {
+        html += `<td class="diag">${v.toFixed(2)}</td>`;
+      } else {
+        const bg = corrColor(v);
+        const fg = textOnCorr(v);
+        html += `<td style="background:${bg}; color:${fg}">${v >= 0 ? '+' : ''}${v.toFixed(2)}</td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+/* ────────────────── Boot ────────────────── */
+window.SP = {
+  sparkline,
+  renderGprVix, renderStocks, renderScatter, renderMatrix,
+  seriesGPR, seriesVIX, seriesJSW, seriesKGHM, seriesPKN, seriesWIG,
+  CRISES,
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+  // sparklines (last 24 months for context)
+  const tail = (arr, n) => arr.slice(-n);
+  sparkline('sp-gpr',  tail(seriesGPR, 24),  CSS('--c-gpr'));
+  sparkline('sp-vix',  tail(seriesVIX, 24),  CSS('--c-vix'));
+  sparkline('sp-usd',  tail([4.18,4.20,4.19,4.21,4.22,4.20,4.23,4.25,4.24,4.26,4.27,4.25,4.26,4.28,4.27,4.28,4.29,4.27,4.28,4.29,4.28,4.27,4.28,4.2847], 24), CSS('--text-muted'));
+  sparkline('sp-risk', [0,0,1,1,0,-1,-1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1], CSS('--c-gpr'));
+
+  renderGprVix();
+  renderStocks();
+  renderMatrix();
+  // Scatter rendered lazily on page 2 activation (page2 starts hidden = 0×0 layout)
+  window.SP.renderScatter = renderScatter;
+});
+
+</script>
+<script>
+/* ───────────────────────────────────────────────────────────────
+   SilesiaPulse · interactions (tabs, slicer, tweaks)
+   ─────────────────────────────────────────────────────────────── */
+
+const app = document.getElementById('app');
+
+/* ─── Page tabs ─── */
+let scatterRendered = false;
+function activatePage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === id));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.page === id));
+  // Reset scroll
+  const c = document.getElementById('canvas');
+  if (c) c.scrollTop = 0;
+  // Lazy-render scatter the first time page 2 becomes visible (canvas had 0x0 layout while hidden)
+  if (id === 'page2' && !scatterRendered && window.SP && window.SP.renderScatter) {
+    requestAnimationFrame(() => { window.SP.renderScatter(); scatterRendered = true; });
+  }
+}
+document.querySelectorAll('.tab[data-page]').forEach(tab => {
+  tab.addEventListener('click', () => activatePage(tab.dataset.page));
+});
+
+/* ─── Top nav (Dashboard / Model / Dane / Ustawienia) ─── */
+document.querySelectorAll('#topnav .nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('#topnav .nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+  });
+});
+
+/* ─── Crisis slicer (toggle highlight only, per spec) ─── */
+function bindSlicer(selector) {
+  const btns = document.querySelectorAll(selector);
+  btns.forEach(b => {
+    b.addEventListener('click', () => {
+      btns.forEach(o => o.classList.remove('active'));
+      b.classList.add('active');
+    });
+  });
+}
+bindSlicer('.crisis-btn:not(.p2)');
+bindSlicer('.crisis-btn.p2');
+
+/* ─── Rail buttons (toggle highlight) ─── */
+document.querySelectorAll('.rail-left .rail-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.rail-left .rail-btn').forEach(o => o.classList.remove('active'));
+    b.classList.add('active');
+  });
+});
+
+/* ───────────────────────────────────────────────────────────────
+   Tweaks — applies state, posts to host, supports activation
+   ─────────────────────────────────────────────────────────────── */
+
+const state = Object.assign({}, TWEAK_DEFAULTS);
+
+function applyTweaks() {
+  app.dataset.accent  = state.accent;
+  app.dataset.density = state.density;
+  app.dataset.theme   = state.theme;
+  // Reflect selection in the panel
+  document.querySelectorAll('#tw-accent .tw-swatch').forEach(s => s.classList.toggle('sel', s.dataset.val === state.accent));
+  document.querySelectorAll('#tw-density .tw-seg-opt').forEach(s => s.classList.toggle('sel', s.dataset.val === state.density));
+  document.querySelectorAll('#tw-theme .tw-seg-opt').forEach(s => s.classList.toggle('sel', s.dataset.val === state.theme));
+}
+applyTweaks();
+
+function setTweak(key, val) {
+  state[key] = val;
+  applyTweaks();
+  // Persist via host
+  window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+}
+
+document.querySelectorAll('#tw-accent .tw-swatch').forEach(s => {
+  s.addEventListener('click', () => setTweak('accent', s.dataset.val));
+});
+document.querySelectorAll('#tw-density .tw-seg-opt').forEach(s => {
+  s.addEventListener('click', () => setTweak('density', s.dataset.val));
+});
+document.querySelectorAll('#tw-theme .tw-seg-opt').forEach(s => {
+  s.addEventListener('click', () => setTweak('theme', s.dataset.val));
+});
+
+/* ─── Panel open/close + host protocol ─── */
+const tw = document.getElementById('tw');
+const twBtn = document.getElementById('tweaks-btn');
+const twClose = document.getElementById('tw-close');
+
+function showPanel() { tw.classList.add('open'); }
+function hidePanel() {
+  tw.classList.remove('open');
+  window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+}
+
+twBtn.addEventListener('click', () => {
+  tw.classList.contains('open') ? hidePanel() : showPanel();
+});
+twClose.addEventListener('click', hidePanel);
+
+// Listen first, then announce availability (order matters)
+window.addEventListener('message', (e) => {
+  const data = e.data || {};
+  if (data.type === '__activate_edit_mode') showPanel();
+  if (data.type === '__deactivate_edit_mode') tw.classList.remove('open');
+});
+window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+
+
+/* ───────────────────────────────────────────────────────────────
+   AI Chat — wire composer + quick-actions to window.claude.complete
+   ─────────────────────────────────────────────────────────────── */
+
+const chatEl   = document.getElementById('chat');
+const inputEl  = document.getElementById('chat-input');
+const sendEl   = document.getElementById('chat-send');
+const qaEl     = document.getElementById('quick-actions');
+
+const CRISIS_META = {
+  'covid':     { name: 'COVID-19',           range: '2020-03-01 → 2020-06-30', n: 87 },
+  'ukraine':   { name: 'Inwazja Ukraina',    range: '2022-02-24 → 2022-09-30', n: 154 },
+  'black-sat': { name: 'Czarna Sobota',      range: '2023-10-07 → 2024-01-31', n: 118 },
+  'epic-fury': { name: 'Operacja Epic Fury', range: '2026-02-01 → 2026-05-27', n: 82 },
+};
+function activeCrisis() {
+  const active = document.querySelector('.crisis-btn.p2.active, .crisis-btn:not(.p2).active');
+  const id = active ? active.dataset.crisis : 'epic-fury';
+  return { id, ...CRISIS_META[id] };
+}
+
+function buildSystemContext() {
+  const c = activeCrisis();
+  return `Jesteś analitykiem ryzyka geopolitycznego SilesiaPulse — projektu UEK Katowice analizującego ekspozycję śląskich spółek (JSW, KGHM, PKN) na szoki geopolityczne.
+
+ŹRÓDŁA DANYCH:
+- qry_MASTER (1 604 rekordy, 02.01.2020 — 27.05.2026)
+- Kolumny: Data | USD_PLN | EUR_PLN | WIG20 | JSW | KGHM | PKN | VIX | GPR | GPRC_POL | Komentarz_AI
+- Miary DAX: Avg VIX 30d, GPR Prev Month, GPR Change %, USD Trend, Risk Label
+
+AKTYWNY KONTEKST (slicer):
+- Kryzys: ${c.name} (${c.range}), n = ${c.n} sesji
+
+AKTUALNE KPI (na 27.05.2026):
+- GPR Index: 187.3 (+12.4% m/m, sygnał WZROST RYZYKA)
+- Avg VIX 30d: 23.7 (+3.1 pt)
+- USD/PLN: 4.2847 (+0.3%)
+- Risk Label (DAX): +1 — RYZYKO ROŚNIE
+
+MACIERZ KORELACJI PEARSONA (okres aktywnego kryzysu):
+        GPR    VIX   USD    JSW   KGHM   PKN
+GPR    1.00   0.67  0.58  -0.43  -0.51 -0.39
+VIX    0.67   1.00  0.71  -0.62  -0.58 -0.44
+USD    0.58   0.71  1.00  -0.38  -0.44 -0.31
+JSW   -0.43  -0.62 -0.38   1.00   0.82  0.76
+KGHM  -0.51  -0.58 -0.44   0.82   1.00  0.79
+PKN   -0.39  -0.44 -0.31   0.76   0.79  1.00
+
+ZASADY ODPOWIEDZI:
+- Odpowiadaj po polsku, zwięźle (max 6-8 zdań), w stylu komentarza analitycznego BI.
+- ZAWSZE odwołuj się do konkretnych liczb z kontekstu (GPR, VIX, korelacje, daty).
+- Używaj nazw kolumn i miar dokładnie tak jak w qry_MASTER.
+- Jeśli formułujesz rekomendację, podaj progi liczbowe (np. "GPR > 200 → WATCH").
+- Nie wymyślaj danych spoza kontekstu. Jeśli czegoś nie wiesz, powiedz to.
+- Markdown: użyj **bold** dla kluczowych terminów, \`backticks\` dla liczb i nazw kolumn.`;
+}
+
+const QUICK_PROMPTS = {
+  'diagnoza':       'Przedstaw zwięzłą diagnozę aktualnej sytuacji rynkowej dla aktywnego kryzysu — co mówią GPR, VIX i Risk Label?',
+  'korelacje':      'Zinterpretuj macierz korelacji dla aktywnego kryzysu — które zależności są najsilniejsze i co z tego wynika dla śląskich spółek (JSW, KGHM, PKN)?',
+  'rekomendacja':   'Sformułuj konkretną rekomendację inwestycyjną dla śląskiego portfela na podstawie aktualnych KPI i aktywnego kryzysu. Podaj progi alertów (GPR, VIX).',
+  'interpretacja':  'Wyjaśnij krótko, co aktualne wartości KPI (GPR 187.3, VIX 23.7, USD/PLN 4.2847, Risk Label +1) mówią o ryzyku dla portfela śląskiego.',
+};
+
+/* ── Minimal markdown: **bold**, `code`, \\n ── */
+function renderMarkdown(text) {
+  // escape HTML
+  let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\n/g, '<br>');
+  return s;
+}
+
+function timeStamp() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+
+function addUserMsg(text) {
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `
+    <div class="avatar user">RB</div>
+    <div>
+      <div class="bubble">${text.replace(/</g, '&lt;')}</div>
+      <div class="msg-meta" style="text-align:right">${timeStamp()} · slicer: ${activeCrisis().name}</div>
+    </div>`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function addAiMsg(html, meta) {
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.innerHTML = `
+    <div class="avatar ai">AI</div>
+    <div>
+      <div class="bubble">${html}</div>
+      <div class="msg-meta">${meta || (timeStamp() + ' · claude-haiku-4-5 · qry_MASTER')}</div>
+    </div>`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.dataset.typing = '1';
+  div.innerHTML = `
+    <div class="avatar ai">AI</div>
+    <div>
+      <div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>
+    </div>`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  return div;
+}
+
+let busy = false;
+async function ask(promptText) {
+  if (busy || !promptText.trim()) return;
+  busy = true;
+  sendEl.classList.add('busy');
+  inputEl.disabled = true;
+  qaEl.querySelectorAll('button').forEach(b => b.disabled = true);
+
+  addUserMsg(promptText);
+  const typingEl = addTyping();
+  const t0 = performance.now();
+
+  try {
+    const reply = await window.claude.complete({
+      messages: [
+        { role: 'user', content: buildSystemContext() + '\n\n---\nPYTANIE: ' + promptText },
+      ],
+    });
+    typingEl.remove();
+    const ms = Math.round(performance.now() - t0);
+    const tokens = Math.round((reply || '').length / 4);
+    addAiMsg(renderMarkdown(reply || '(brak odpowiedzi)'),
+             `${timeStamp()} · claude-haiku-4-5 · ${tokens} tok · ${ms}ms · slicer: ${activeCrisis().name}`);
+  } catch (err) {
+    typingEl.remove();
+    addAiMsg(`<span style="color:var(--up)">⚠ Błąd:</span> ${(err && err.message) || err}<br><span style="color:var(--text-muted); font-size:11px">Sprawdź połączenie z modelem (window.claude.complete).</span>`,
+             timeStamp() + ' · error');
+  } finally {
+    busy = false;
+    sendEl.classList.remove('busy');
+    inputEl.disabled = false;
+    qaEl.querySelectorAll('button').forEach(b => b.disabled = false);
+    inputEl.value = '';
+    inputEl.focus();
+  }
+}
+
+sendEl.addEventListener('click', () => ask(inputEl.value));
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(inputEl.value); }
+});
+qaEl.querySelectorAll('.quick-action').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.action;
+    const prompt = QUICK_PROMPTS[action];
+    if (prompt) ask(prompt);
+  });
+});
+
+</script>
+
+</body>
+</html>

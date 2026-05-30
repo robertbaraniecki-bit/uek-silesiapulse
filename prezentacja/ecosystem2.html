@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SilesiaPulse · Ekosystem narzędzi</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #07090f;
+  --bg-2:     #0a0e17;
+  --surface:  #0d1117;
+  --border:   #1a2535;
+  --border-2: #2a3a55;
+  --amber:    #f59e0b;
+  --amber-d:  #7a4f06;
+  --blue:     #3b82f6;
+  --blue-d:   #1e3a5f;
+  --green:    #10b981;
+  --green-d:  #064e3b;
+  --purple:   #a78bfa;
+  --purple-d: #3b2170;
+  --red:      #ef4444;
+  --red-d:    #7f1d1d;
+  --teal:     #06b6d4;
+  --teal-d:   #164e63;
+  --text:     #e2e8f0;
+  --muted:    #4b5a6e;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+  --display:  'Syne', sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  width:100vw; height:100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset:0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(245,158,11,.05) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(59,130,246,.04) 0%, transparent 40%);
+  pointer-events: none; z-index:0;
+}
+.grid-bg {
+  position:fixed; inset:0; z-index:0;
+  background-image:
+    linear-gradient(rgba(59,130,246,.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,.02) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events:none;
+  mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 90%);
+}
+
+.wrap {
+  position: relative; z-index:1;
+  width:100%; height:100%;
+  display: flex; flex-direction: column;
+  padding: 1.4rem 2.5rem 1rem;
+}
+
+.header {
+  display: flex; align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+  opacity:0; animation: fadeUp .5s ease .1s forwards;
+}
+.slide-num {
+  font-family: var(--mono); font-size: .62rem;
+  color: var(--blue); letter-spacing: .14em;
+  margin-bottom: .35rem;
+}
+.title {
+  font-family: var(--display); font-size: 1.6rem;
+  font-weight: 800; line-height:1.1;
+}
+.title em { color: var(--amber); font-style: normal; }
+.title .accent { color: var(--purple); font-style: italic; font-weight: 600; }
+.subtitle {
+  font-family: var(--mono); font-size: .58rem;
+  color: var(--muted); letter-spacing: .08em;
+  margin-top: .3rem;
+}
+.header-right {
+  display: flex; flex-direction: column; align-items: flex-end; gap: .35rem;
+}
+.session-badge {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-family: var(--mono); font-size: .55rem;
+  color: var(--green); border: 1px solid var(--green-d);
+  padding: .2rem .6rem; letter-spacing: .08em;
+  text-transform: uppercase; border-radius: 2px;
+}
+.session-badge::before {
+  content:''; width:6px; height:6px; border-radius:50%;
+  background:var(--green); animation:pulse 2s infinite;
+}
+.back-link {
+  font-family: var(--mono); font-size: .58rem;
+  color: var(--muted); letter-spacing: .08em;
+  text-transform: uppercase; cursor: pointer;
+  text-decoration: none; transition: color .2s;
+}
+.back-link:hover { color: var(--amber); }
+
+.canvas {
+  flex: 1;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr 1fr;
+  gap: 3.5rem 4.5rem;
+  padding: 0 .3rem;
+}
+
+.connections {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.win {
+  position: relative; z-index: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  opacity: 0; transform: translateY(20px) scale(.95);
+  transition: opacity .5s, transform .5s, box-shadow .35s, border-color .35s;
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.6);
+  cursor: pointer;
+  user-select: none;
+}
+.win.visible { opacity:1; transform:translateY(0) scale(1); }
+.win:hover {
+  border-color: var(--border-2);
+  box-shadow: 0 12px 40px -8px currentColor;
+}
+.win:active { transform: scale(.97); }
+@keyframes flash {
+  0%   { opacity: .35; }
+  100% { opacity: 0; }
+}
+.win-flash {
+  position: absolute; inset: 0;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: 6px;
+  z-index: 10;
+  animation: flash .4s ease forwards;
+}
+
+.win-bar {
+  display: flex; align-items: center;
+  padding: .28rem .55rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,.25);
+  font-family: var(--mono); font-size: .48rem;
+  color: var(--muted); letter-spacing: .04em;
+  flex-shrink: 0;
+}
+.win-dots {
+  display: flex; gap: 5px; margin-right: .6rem;
+}
+.win-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: .5px solid rgba(255,255,255,.15);
+}
+.win-dot.r { background: #f56b6b; }
+.win-dot.y { background: #f5c046; }
+.win-dot.g { background: #4ec97c; }
+.win-title {
+  flex: 1; text-align: left;
+  font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.win-acc {
+  font-family: var(--mono); font-size: .5rem;
+  padding: .1rem .4rem; border-radius: 2px;
+  letter-spacing: .04em;
+}
+
+.win-body {
+  flex: 1;
+  padding: .45rem .6rem;
+  display: flex; flex-direction: column; gap: .3rem;
+  min-height: 0;
+}
+
+.win-id {
+  display: flex; align-items: center; gap: .5rem;
+  padding-bottom: .35rem;
+  border-bottom: 1px solid var(--border);
+}
+.win-icon-box {
+  width: 28px; height: 28px;
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem;
+  flex-shrink: 0;
+  background: currentColor;
+  position: relative;
+  overflow: hidden;
+}
+.win-icon-text {
+  font-style: normal;
+  color: #0a0e17;
+  z-index:1; position:relative;
+  font-family: var(--display); font-weight: 800;
+  font-size: .9rem;
+}
+.win-name {
+  font-family: var(--display); font-size: .78rem;
+  font-weight: 700; line-height: 1.15;
+  color: var(--text);
+}
+.win-role {
+  font-family: var(--mono); font-size: .43rem;
+  color: var(--muted); letter-spacing: .06em;
+  text-transform: uppercase; margin-top: .1rem;
+}
+
+.win-tags {
+  display: flex; flex-wrap: wrap; gap: .18rem;
+}
+.wtag {
+  font-family: var(--mono); font-size: .42rem;
+  padding: .06rem .3rem; border: 1px solid;
+  border-radius: 2px; letter-spacing: .04em;
+}
+
+.win-preview {
+  flex: 1; min-height: 0;
+  background: rgba(0,0,0,.28);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: .35rem .45rem;
+  overflow: hidden;
+  display: flex; flex-direction: column; gap: .15rem;
+}
+
+.c-blue   { color: var(--blue); }
+.c-amber  { color: var(--amber); }
+.c-green  { color: var(--green); }
+.c-purple { color: var(--purple); }
+.c-teal   { color: var(--teal); }
+.c-red    { color: var(--red); }
+
+.b-blue   { border-color: var(--blue-d) !important; }
+.b-amber  { border-color: var(--amber-d) !important; }
+.b-green  { border-color: var(--green-d) !important; }
+.b-purple { border-color: var(--purple-d) !important; }
+.b-teal   { border-color: var(--teal-d) !important; }
+.b-red    { border-color: var(--red-d) !important; }
+
+/* VSC code lines */
+.code-line {
+  display: flex; gap: .35rem; align-items: baseline;
+  font-family: var(--mono); font-size: .44rem;
+  line-height: 1.5;
+}
+.code-num { color: #3a4756; min-width: 10px; text-align: right; flex-shrink:0; }
+.code-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk-kw  { color: #c084fc; }
+.tk-fn  { color: #60a5fa; }
+.tk-str { color: #86efac; }
+.tk-cmt { color: #475569; font-style: italic; }
+.tk-var { color: #e2e8f0; }
+.tk-op  { color: #94a3b8; }
+
+/* Excel sheet preview */
+.xl-tabs {
+  display: flex; gap: 2px; margin-bottom: .25rem;
+}
+.xl-tab {
+  font-family: var(--mono); font-size: .4rem;
+  padding: .06rem .28rem; background: rgba(0,0,0,.3);
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+}
+.xl-tab.active {
+  color: var(--green); border-bottom-color: var(--green);
+  background: rgba(16,185,129,.08);
+}
+.xl-row {
+  display: grid;
+  grid-template-columns: 18px 1fr .8fr .6fr 1fr;
+  gap: 1px;
+  font-family: var(--mono); font-size: .4rem;
+  line-height: 1.3;
+}
+.xl-row.head .xl-cell {
+  background: rgba(16,185,129,.18);
+  color: var(--green);
+  font-weight: 600;
+}
+.xl-row.head .xl-cell:first-child { background: rgba(0,0,0,.3); }
+.xl-cell {
+  background: rgba(0,0,0,.2);
+  padding: .1rem .22rem;
+  white-space: nowrap; overflow: hidden;
+  color: var(--text);
+}
+.xl-cell.idx { color: var(--muted); text-align:center; }
+.xl-cell.ai { color: var(--purple); font-style: italic; }
+
+/* Power BI chart */
+.bi-chart {
+  flex: 1; display: flex; align-items: flex-end;
+  gap: 2px; padding: .25rem 0 .15rem;
+  border-bottom: 1px solid var(--border);
+  min-height: 24px;
+}
+.bi-bar {
+  flex: 1; background: linear-gradient(180deg, var(--teal), var(--teal-d));
+  opacity: .85; border-radius: 1px 1px 0 0;
+}
+.bi-kpis {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: .3rem; margin-top: .25rem;
+}
+.bi-kpi {
+  text-align: center;
+  border-left: 2px solid var(--teal);
+  padding-left: .25rem;
+}
+.bi-kpi-v {
+  font-family: var(--display); font-size: .62rem; font-weight: 800;
+  color: var(--teal); line-height: 1.1;
+}
+.bi-kpi-l {
+  font-family: var(--mono); font-size: .38rem;
+  color: var(--muted); letter-spacing: .04em;
+}
+
+/* GitKraken graph */
+.gk-row {
+  display: flex; align-items: center; gap: .45rem;
+  font-family: var(--mono); font-size: .42rem;
+  line-height: 1.45;
+  padding: .04rem 0;
+}
+.gk-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--amber); flex-shrink: 0;
+  border: 2px solid var(--bg-2);
+  box-shadow: 0 0 0 1px var(--amber);
+  position: relative;
+}
+.gk-dot::after {
+  content:''; position:absolute;
+  left: 50%; top: 100%;
+  width: 1px; height: 7px;
+  background: var(--amber-d);
+  transform: translateX(-50%);
+}
+.gk-row:last-child .gk-dot::after { display: none; }
+.gk-msg { color: var(--text); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gk-hash { color: var(--amber); font-size: .42rem; flex-shrink:0; }
+
+/* Python terminal */
+.py-line {
+  font-family: var(--mono); font-size: .42rem;
+  line-height: 1.45;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.py-prompt { color: var(--purple); }
+.py-out { color: var(--text); }
+.py-num { color: var(--green); }
+.py-ok { color: var(--green); }
+
+/* GitHub repo list */
+.gh-row {
+  display: flex; align-items: center; gap: .45rem;
+  padding: .15rem 0;
+  border-bottom: 1px dotted var(--border);
+  font-family: var(--mono); font-size: .42rem;
+}
+.gh-row:last-child { border-bottom: none; }
+.gh-icon {
+  color: var(--red); flex-shrink: 0;
+  width: 12px; text-align: center;
+}
+.gh-name {
+  color: var(--text); flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gh-meta {
+  color: var(--muted); font-size: .42rem;
+  white-space: nowrap;
+}
+.gh-priv {
+  font-size: .38rem; padding: .04rem .25rem;
+  border: 1px solid var(--red-d); color: var(--red);
+  border-radius: 2px; letter-spacing: .04em;
+}
+
+.legend {
+  display: flex; gap: 1.6rem; align-items: center;
+  margin-top: .8rem; padding-top: .7rem;
+  border-top: 1px solid var(--border);
+  opacity: 0; animation: fadeUp .4s ease 1.6s forwards;
+}
+.legend-item {
+  display: flex; align-items: center; gap: .45rem;
+  font-family: var(--mono); font-size: .55rem;
+  color: var(--muted); letter-spacing: .06em;
+}
+.legend-line {
+  width: 22px; height: 2px;
+  flex-shrink: 0;
+}
+.legend-line.dash {
+  background: repeating-linear-gradient(90deg,
+    currentColor 0 6px, transparent 6px 12px);
+}
+
+.conn-path {
+  fill: none; stroke-width: 3;
+  opacity: 0;
+  transition: opacity .6s;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.conn-path.visible { opacity: 1; }
+
+/* etykieta jako plakietka */
+.conn-label-group {
+  opacity: 0;
+  transition: opacity .5s;
+}
+.conn-label-group.visible { opacity: 1; }
+.conn-label-bg {
+  fill: var(--bg-2);
+  stroke-width: 1;
+  rx: 3;
+}
+.conn-label-text {
+  font-family: var(--mono); font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  dominant-baseline: central;
+  text-anchor: middle;
+}
+
+.conn-dot-anim {
+  opacity: 0;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+.conn-dot-anim.visible { opacity: 1; }
+.conn-dot-glow {
+  opacity: 0;
+}
+.conn-dot-glow.visible { opacity: .35; }
+
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: .25; }
+}
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<div class="wrap">
+
+  <div class="header">
+    <div>
+      <div class="slide-num">// Ekosystem narzędzi · SilesiaPulse</div>
+      <h1 class="title">Sześć aplikacji. <em>Jeden</em> <span class="accent">workflow</span>.</h1>
+      <div class="subtitle">Wariant A — jak narzędzia ze sobą rozmawiają · kod · wersjonowanie · dane · wizualizacja</div>
+    </div>
+    <div class="header-right">
+      <div class="session-badge">Live · sesja robocza</div>
+      <div style="display:flex; gap:.9rem; align-items:center;">
+        <a class="back-link" onclick="history.back()">← wróć</a>
+        <a class="back-link" href="ecosystem_tools.html" style="color:var(--amber); border:1px solid var(--amber-d); padding:.15rem .5rem; border-radius:2px; transition:background .2s, color .2s;" onmouseover="this.style.background='rgba(245,158,11,.08)'" onmouseout="this.style.background='transparent'">Tool Stack →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="canvas" id="canvas">
+
+    <svg class="connections" id="connections" preserveAspectRatio="none">
+      <defs>
+        <marker id="ah-blue"   markerWidth="14" markerHeight="14" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#3b82f6"/></marker>
+        <marker id="ah-amber"  markerWidth="14" markerHeight="14" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#f59e0b"/></marker>
+        <marker id="ah-purple" markerWidth="14" markerHeight="14" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#a78bfa"/></marker>
+        <marker id="ah-green"  markerWidth="14" markerHeight="14" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#10b981"/></marker>
+        <marker id="ah-teal"   markerWidth="14" markerHeight="14" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#06b6d4"/></marker>
+        <marker id="ah-red"    markerWidth="14" markerHeight="14" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="#ef4444"/></marker>
+      </defs>
+    </svg>
+
+    <!-- 1. VSC -->
+    <div class="win c-blue b-blue" id="w-vsc" style="grid-column:1; grid-row:1;" onclick="openApp(this,'open/vscode')" title="Otwórz VS Code">
+      <div class="win-bar">
+        <div class="win-dots"><div class="win-dot r"></div><div class="win-dot y"></div><div class="win-dot g"></div></div>
+        <div class="win-title">silesiapulse_ai.py — uek-silesiapulse</div>
+        <div class="win-acc c-blue" style="border:1px solid var(--blue-d);">VSC</div>
+      </div>
+      <div class="win-body">
+        <div class="win-id">
+          <div class="win-icon-box c-blue"><span class="win-icon-text">&lt;/&gt;</span></div>
+          <div class="win-name-block">
+            <div class="win-name">Visual Studio Code</div>
+            <div class="win-role">Edytor kodu · IDE</div>
+          </div>
+        </div>
+        <div class="win-tags">
+          <span class="wtag c-blue b-blue">Python</span>
+          <span class="wtag c-blue b-blue">VBA</span>
+          <span class="wtag c-blue b-blue">M code</span>
+          <span class="wtag c-blue b-blue">terminal</span>
+        </div>
+        <div class="win-preview">
+          <div class="code-line"><span class="code-num">12</span><span class="code-txt"><span class="tk-kw">import</span> <span class="tk-var">xlwings</span> <span class="tk-kw">as</span> <span class="tk-var">xw</span></span></div>
+          <div class="code-line"><span class="code-num">13</span><span class="code-txt"><span class="tk-kw">from</span> <span class="tk-var">anthropic</span> <span class="tk-kw">import</span> <span class="tk-var">Anthropic</span></span></div>
+          <div class="code-line"><span class="code-num">14</span><span class="code-txt"></span></div>
+          <div class="code-line"><span class="code-num">15</span><span class="code-txt"><span class="tk-cmt"># czytaj qry_MASTER, wywołaj Claude</span></span></div>
+          <div class="code-line"><span class="code-num">16</span><span class="code-txt"><span class="tk-kw">def</span> <span class="tk-fn">generuj_komentarz_ai</span><span class="tk-op">():</span></span></div>
+          <div class="code-line"><span class="code-num">17</span><span class="code-txt">  <span class="tk-var">wb</span> <span class="tk-op">=</span> <span class="tk-var">xw</span><span class="tk-op">.</span><span class="tk-var">apps</span><span class="tk-op">.</span><span class="tk-var">active</span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. EXCEL -->
+    <div class="win c-green b-green" id="w-excel" style="grid-column:2; grid-row:1;" onclick="openApp(this,'open/excel')" title="Otwórz Excel">
+      <div class="win-bar">
+        <div class="win-dots"><div class="win-dot r"></div><div class="win-dot y"></div><div class="win-dot g"></div></div>
+        <div class="win-title">UEK_Baraniecki_2026.xlsm</div>
+        <div class="win-acc c-green" style="border:1px solid var(--green-d);">EXCEL</div>
+      </div>
+      <div class="win-body">
+        <div class="win-id">
+          <div class="win-icon-box c-green"><span class="win-icon-text">X</span></div>
+          <div class="win-name-block">
+            <div class="win-name">Microsoft Excel</div>
+            <div class="win-role">Pipeline · Model · UI</div>
+          </div>
+        </div>
+        <div class="win-tags">
+          <span class="wtag c-green b-green">Power Query</span>
+          <span class="wtag c-green b-green">Power Pivot</span>
+          <span class="wtag c-green b-green">DAX</span>
+          <span class="wtag c-green b-green">VBA</span>
+        </div>
+        <div class="win-preview">
+          <div class="xl-tabs">
+            <span class="xl-tab active">qry_MASTER</span>
+            <span class="xl-tab">Panel</span>
+            <span class="xl-tab">AI_Summary</span>
+          </div>
+          <div class="xl-row head">
+            <div class="xl-cell idx"></div>
+            <div class="xl-cell">Data</div>
+            <div class="xl-cell">GPR</div>
+            <div class="xl-cell">VIX</div>
+            <div class="xl-cell">Komentarz_AI</div>
+          </div>
+          <div class="xl-row">
+            <div class="xl-cell idx">2</div>
+            <div class="xl-cell">2026-05-22</div>
+            <div class="xl-cell">~350</div>
+            <div class="xl-cell">16.7</div>
+            <div class="xl-cell ai">deeskalacja…</div>
+          </div>
+          <div class="xl-row">
+            <div class="xl-cell idx">3</div>
+            <div class="xl-cell">2026-05-21</div>
+            <div class="xl-cell">~352</div>
+            <div class="xl-cell">17.1</div>
+            <div class="xl-cell ai">rozejm trwa…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. POWER BI -->
+    <div class="win c-teal b-teal" id="w-bi" style="grid-column:3; grid-row:1;">
+      <div class="win-bar">
+        <div class="win-dots"><div class="win-dot r"></div><div class="win-dot y"></div><div class="win-dot g"></div></div>
+        <div class="win-title">SilesiaPulse_Dashboard.pbix</div>
+        <div class="win-acc c-teal" style="border:1px solid var(--teal-d);">BI</div>
+      </div>
+      <div class="win-body">
+        <div class="win-id">
+          <div class="win-icon-box c-teal"><span class="win-icon-text">▣</span></div>
+          <div class="win-name-block">
+            <div class="win-name">Power BI Desktop</div>
+            <div class="win-role">Dashboard · Wizualizacja</div>
+          </div>
+        </div>
+        <div class="win-tags">
+          <span class="wtag c-teal b-teal">KPI</span>
+          <span class="wtag c-teal b-teal">scatter</span>
+          <span class="wtag c-teal b-teal">slicery</span>
+          <span class="wtag c-teal b-teal">filtry</span>
+        </div>
+        <div class="win-preview">
+          <div class="bi-chart">
+            <div class="bi-bar" style="height:30%;"></div>
+            <div class="bi-bar" style="height:55%;"></div>
+            <div class="bi-bar" style="height:42%;"></div>
+            <div class="bi-bar" style="height:78%;"></div>
+            <div class="bi-bar" style="height:90%;"></div>
+            <div class="bi-bar" style="height:65%;"></div>
+            <div class="bi-bar" style="height:48%;"></div>
+            <div class="bi-bar" style="height:35%;"></div>
+          </div>
+          <div class="bi-kpis">
+            <div class="bi-kpi">
+              <div class="bi-kpi-v">3 615</div>
+              <div class="bi-kpi-l">WIG20</div>
+            </div>
+            <div class="bi-kpi">
+              <div class="bi-kpi-v">16.7</div>
+              <div class="bi-kpi-l">VIX</div>
+            </div>
+            <div class="bi-kpi">
+              <div class="bi-kpi-v">3.72</div>
+              <div class="bi-kpi-l">USD/PLN</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. GITKRAKEN -->
+    <div class="win c-amber b-amber" id="w-git" style="grid-column:1; grid-row:2;" onclick="openApp(this,'open/gitkraken')" title="Otwórz GitKraken">
+      <div class="win-bar">
+        <div class="win-dots"><div class="win-dot r"></div><div class="win-dot y"></div><div class="win-dot g"></div></div>
+        <div class="win-title">uek-silesiapulse — main</div>
+        <div class="win-acc c-amber" style="border:1px solid var(--amber-d);">GIT</div>
+      </div>
+      <div class="win-body">
+        <div class="win-id">
+          <div class="win-icon-box c-amber"><span class="win-icon-text">⎇</span></div>
+          <div class="win-name-block">
+            <div class="win-name">GitKraken</div>
+            <div class="win-role">Wersjonowanie · Historia</div>
+          </div>
+        </div>
+        <div class="win-tags">
+          <span class="wtag c-amber b-amber">commit</span>
+          <span class="wtag c-amber b-amber">push</span>
+          <span class="wtag c-amber b-amber">branch</span>
+          <span class="wtag c-amber b-amber">diff</span>
+        </div>
+        <div class="win-preview">
+          <div class="gk-row">
+            <div class="gk-dot"></div>
+            <div class="gk-msg">excel: Panel sterowania v2</div>
+            <div class="gk-hash">a3f1c8</div>
+          </div>
+          <div class="gk-row">
+            <div class="gk-dot"></div>
+            <div class="gk-msg">python: silesiapulse_ai end-to-end</div>
+            <div class="gk-hash">b7e442</div>
+          </div>
+          <div class="gk-row">
+            <div class="gk-dot"></div>
+            <div class="gk-msg">vba: makra OdswierzDane</div>
+            <div class="gk-hash">c19d05</div>
+          </div>
+          <div class="gk-row">
+            <div class="gk-dot"></div>
+            <div class="gk-msg">data: aktualizacja CSV Stooq</div>
+            <div class="gk-hash">d52a91</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. PYTHON + AI -->
+    <div class="win c-purple b-purple" id="w-python" style="grid-column:2; grid-row:2;" onclick="openApp(this,'open/cmd')" title="Otwórz terminal CMD">
+      <div class="win-bar">
+        <div class="win-dots"><div class="win-dot r"></div><div class="win-dot y"></div><div class="win-dot g"></div></div>
+        <div class="win-title">CMD — python silesiapulse_ai.py</div>
+        <div class="win-acc c-purple" style="border:1px solid var(--purple-d);">PY+AI</div>
+      </div>
+      <div class="win-body">
+        <div class="win-id">
+          <div class="win-icon-box c-purple"><span class="win-icon-text">π</span></div>
+          <div class="win-name-block">
+            <div class="win-name">Python + Claude API</div>
+            <div class="win-role">AI Commentary · xlwings</div>
+          </div>
+        </div>
+        <div class="win-tags">
+          <span class="wtag c-purple b-purple">xlwings</span>
+          <span class="wtag c-purple b-purple">anthropic</span>
+          <span class="wtag c-purple b-purple">pandas</span>
+          <span class="wtag c-purple b-purple">CMD</span>
+        </div>
+        <div class="win-preview">
+          <div class="py-line"><span class="py-prompt">&gt;</span> <span class="py-out">python silesiapulse_ai.py</span></div>
+          <div class="py-line"><span class="py-out">Łączę z Excelem… </span><span class="py-ok">OK</span></div>
+          <div class="py-line"><span class="py-out">Pobieram 30 dni z qry_MASTER</span></div>
+          <div class="py-line"><span class="py-out">Wywołuję Claude API: </span><span class="py-num">9/9</span> <span class="py-ok">✓</span></div>
+          <div class="py-line"><span class="py-out">Zapis komentarzy do kol. K</span></div>
+          <div class="py-line"><span class="py-ok">✓ Gotowe (62 sek.)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. GITHUB -->
+    <div class="win c-red b-red" id="w-github" style="grid-column:3; grid-row:2;" onclick="openUrl(this,'https://github.com/robertbaraniecki-bit/uek-silesiapulse')" title="Otwórz GitHub">
+      <div class="win-bar">
+        <div class="win-dots"><div class="win-dot r"></div><div class="win-dot y"></div><div class="win-dot g"></div></div>
+        <div class="win-title">github.com/robertbaraniecki-bit</div>
+        <div class="win-acc c-red" style="border:1px solid var(--red-d);">REPO</div>
+      </div>
+      <div class="win-body">
+        <div class="win-id">
+          <div class="win-icon-box c-red"><span class="win-icon-text">⌥</span></div>
+          <div class="win-name-block">
+            <div class="win-name">GitHub</div>
+            <div class="win-role">Repozytorium · Snapshots</div>
+          </div>
+        </div>
+        <div class="win-tags">
+          <span class="wtag c-red b-red">main</span>
+          <span class="wtag c-red b-red">private</span>
+          <span class="wtag c-red b-red">snapshots</span>
+        </div>
+        <div class="win-preview">
+          <div class="gh-row">
+            <span class="gh-icon">📁</span>
+            <span class="gh-name">uek-silesiapulse</span>
+            <span class="gh-priv">PRIVATE</span>
+          </div>
+          <div class="gh-row">
+            <span class="gh-icon">📄</span>
+            <span class="gh-name">excel/UEK_Baraniecki_2026.xlsm</span>
+            <span class="gh-meta">2h</span>
+          </div>
+          <div class="gh-row">
+            <span class="gh-icon">🐍</span>
+            <span class="gh-name">python/silesiapulse_ai.py</span>
+            <span class="gh-meta">2h</span>
+          </div>
+          <div class="gh-row">
+            <span class="gh-icon">📊</span>
+            <span class="gh-name">data/dane_csv/</span>
+            <span class="gh-meta">1d</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-line" style="background:var(--blue)"></div>
+      <span>kod → uruchomienie</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line dash" style="color:var(--amber)"></div>
+      <span>commit → push</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line" style="background:var(--purple)"></div>
+      <span>VBA → Python → AI</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line" style="background:var(--green)"></div>
+      <span>import modelu</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-line dash" style="color:var(--red)"></div>
+      <span>snapshot → repo</span>
+    </div>
+    <div class="legend-item" style="margin-left:auto;">
+      <span style="font-style:italic;">Robert Baraniecki · SilesiaPulse · UEK 2026</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Launcher helpers ──────────────────────────────────────────
+function openApp(el, endpoint) {
+  flash(el);
+  fetch('http://localhost:5000/' + endpoint)
+    .catch(() => {
+      console.warn('Flask launcher nie odpowiada — uruchom launcher.py');
+    });
+}
+
+function openUrl(el, url) {
+  flash(el);
+  setTimeout(() => window.open(url, '_blank'), 150);
+}
+
+function flash(el) {
+  const f = document.createElement('div');
+  f.className = 'win-flash';
+  el.appendChild(f);
+  f.addEventListener('animationend', () => f.remove());
+}
+// ─────────────────────────────────────────────────────────────
+
+const wins = ['w-vsc','w-excel','w-bi','w-git','w-python','w-github'];
+wins.forEach((id, i) => {
+  setTimeout(() => {
+    document.getElementById(id)?.classList.add('visible');
+  }, 200 + i * 200);
+});
+
+function drawConnections() {
+  const svg = document.getElementById('connections');
+  const canvas = document.getElementById('canvas');
+  const cb = canvas.getBoundingClientRect();
+
+  function point(id, side) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    const cx = r.left - cb.left;
+    const cy = r.top - cb.top;
+    const w = r.width, h = r.height;
+    if (side === 'right')  return { x: cx + w,     y: cy + h/2 };
+    if (side === 'left')   return { x: cx,         y: cy + h/2 };
+    if (side === 'top')    return { x: cx + w/2,   y: cy };
+    if (side === 'bottom') return { x: cx + w/2,   y: cy + h };
+    return { x: cx + w/2, y: cy + h/2 };
+  }
+
+  const conns = [
+    ['w-vsc',    'right',  'w-excel',   'left',   '#3b82f6',  'ah-blue',   false, 'xlwings'],
+    ['w-excel',  'right',  'w-bi',      'left',   '#10b981',  'ah-green',  false, 'import modelu'],
+    ['w-vsc',    'bottom', 'w-git',     'top',    '#f59e0b',  'ah-amber',  true,  'commit'],
+    ['w-excel',  'bottom', 'w-python',  'top',    '#a78bfa',  'ah-purple', false, 'VBA trigger'],
+    ['w-bi',     'bottom', 'w-github',  'top',    '#06b6d4',  'ah-teal',   true,  'snapshot'],
+    ['w-git',    'right',  'w-python',  'left',   '#f59e0b',  'ah-amber',  true,  'wersja kodu'],
+    ['w-python', 'right',  'w-github',  'left',   '#a78bfa',  'ah-purple', true,  'push'],
+  ];
+
+  // cleanup
+  svg.querySelectorAll('path.conn-path, g.conn-label-group, circle.conn-dot-anim, circle.conn-dot-glow').forEach(n => n.remove());
+
+  svg.setAttribute('viewBox', `0 0 ${cb.width} ${cb.height}`);
+
+  // === FAZA 1: ścieżki + kropki ===
+  const labelRequests = [];
+
+  conns.forEach((c, i) => {
+    const [fid, fs, tid, ts, color, marker, dashed, label] = c;
+    const a = point(fid, fs);
+    const b = point(tid, ts);
+    if (!a || !b) return;
+
+    let path;
+    if ((fs === 'right' && ts === 'left') || (fs === 'left' && ts === 'right')) {
+      const dx = (b.x - a.x) * .35;
+      path = `M ${a.x} ${a.y} C ${a.x + dx} ${a.y}, ${b.x - dx} ${b.y}, ${b.x - 8} ${b.y}`;
+    } else if ((fs === 'bottom' && ts === 'top') || (fs === 'top' && ts === 'bottom')) {
+      const dy = (b.y - a.y) * .35;
+      path = `M ${a.x} ${a.y} C ${a.x} ${a.y + dy}, ${b.x} ${b.y - dy}, ${b.x} ${b.y - 8}`;
+    } else {
+      path = `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+    }
+
+    // ścieżka
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', path);
+    p.setAttribute('class', 'conn-path');
+    p.setAttribute('stroke', color);
+    if (dashed) p.setAttribute('stroke-dasharray', '8 8');
+    p.setAttribute('marker-end', `url(#${marker})`);
+    svg.appendChild(p);
+
+    // halo
+    const glow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    glow.setAttribute('r', 10);
+    glow.setAttribute('fill', color);
+    glow.setAttribute('class', 'conn-dot-glow');
+    const glowAnim = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+    glowAnim.setAttribute('dur', (2.2 + i*.15) + 's');
+    glowAnim.setAttribute('repeatCount', 'indefinite');
+    glowAnim.setAttribute('path', path);
+    glow.appendChild(glowAnim);
+    svg.appendChild(glow);
+
+    // kropka
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('r', 5);
+    dot.setAttribute('fill', color);
+    dot.setAttribute('class', 'conn-dot-anim');
+    dot.style.color = color;
+    const anim = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+    anim.setAttribute('dur', (2.2 + i*.15) + 's');
+    anim.setAttribute('repeatCount', 'indefinite');
+    anim.setAttribute('path', path);
+    dot.appendChild(anim);
+    svg.appendChild(dot);
+
+    // odkładamy etykiety do fazy 2 (żeby były WSZYSTKIE NA WIERZCHU)
+    labelRequests.push({ a, b, fs, ts, color, label, i, refs: { p, dot, glow } });
+  });
+
+  // === FAZA 2: etykiety jako plakietki na samym wierzchu ===
+  labelRequests.forEach(({ a, b, fs, ts, color, label, i, refs }) => {
+    // Pozycja etykiety zależna od typu połączenia
+    let lx, ly;
+    if ((fs === 'right' && ts === 'left') || (fs === 'left' && ts === 'right')) {
+      // poziome — etykieta nad środkiem, lekko podniesiona
+      lx = (a.x + b.x) / 2;
+      ly = (a.y + b.y) / 2 - 14;
+    } else if ((fs === 'bottom' && ts === 'top') || (fs === 'top' && ts === 'bottom')) {
+      // pionowe — etykieta z prawej strony linii, w 1/3 wysokości
+      lx = a.x + 60;
+      ly = a.y + (b.y - a.y) * .35;
+    } else {
+      lx = (a.x + b.x) / 2;
+      ly = (a.y + b.y) / 2 - 12;
+    }
+
+    // pomiar tekstu — szerokość plakietki
+    const padX = 8, padY = 4;
+    const charW = 6.2; // przybliżenie dla 9px IBM Plex Mono uppercase
+    const w = label.length * charW + padX * 2;
+    const h = 18;
+
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'conn-label-group');
+    g.setAttribute('transform', `translate(${lx - w/2}, ${ly - h/2})`);
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('class', 'conn-label-bg');
+    rect.setAttribute('width', w);
+    rect.setAttribute('height', h);
+    rect.setAttribute('rx', 3);
+    rect.setAttribute('stroke', color);
+    rect.setAttribute('fill-opacity', '.95');
+    g.appendChild(rect);
+
+    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('class', 'conn-label-text');
+    txt.setAttribute('x', w/2);
+    txt.setAttribute('y', h/2 + 1);
+    txt.setAttribute('fill', color);
+    txt.textContent = label;
+    g.appendChild(txt);
+
+    svg.appendChild(g); // dodajemy NA SAMYM KOŃCU → najwyżej w stosie
+
+    setTimeout(() => {
+      refs.p.classList.add('visible');
+      refs.dot.classList.add('visible');
+      refs.glow.classList.add('visible');
+      g.classList.add('visible');
+    }, 1500 + i * 180);
+  });
+}
+
+setTimeout(drawConnections, 1700);
+window.addEventListener('resize', () => setTimeout(drawConnections, 100));
+</script>
+</body>
+</html>

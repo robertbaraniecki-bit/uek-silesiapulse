@@ -29,7 +29,7 @@ DATA_OD_NBP_ZAKRESY = [
     ("2026-01-01", datetime.now().strftime("%Y-%m-%d")),
 ]
 
-FOLDER_CSV = r"C:\Users\Oloros\OneDrive\Pulpit\Projekt UEK Czerwiec 2026\PROJEKT\dane_csv"
+FOLDER_CSV = r"C:\Users\Oloros\OneDrive\Pulpit\SilesiaPulse_SEMINARIUM_28.05\data\dane_csv"
 STOOQ_KLUCZ = "Eg9CrBlcSu2kzNme7A5MsyOq0IEawQhK"
 
 SPOLKI_YFINANCE = {

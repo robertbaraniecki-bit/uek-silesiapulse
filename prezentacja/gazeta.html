@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEO MONITOR · Bliski Wschód 2023–2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --ink:      #1a1209;
+  --ink-mid:  #3d2f1a;
+  --ink-soft: #6b5a42;
+  --paper:    #f5f0e8;
+  --paper-2:  #ede8da;
+  --rule:     #2a1f0e;
+  --red:      #8b1a1a;
+  --amber:    #9a6200;
+  --blue:     #1a3a5c;
+  --serif:    'Playfair Display', Georgia, serif;
+  --body:     'Source Serif 4', Georgia, serif;
+  --mono:     'IBM Plex Mono', monospace;
+}
+
+html { background: #c8bfad; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0;
+  box-shadow: 0 4px 40px rgba(0,0,0,.35);
+}
+
+/* ── MASTHEAD ── */
+.masthead {
+  border-bottom: 4px double var(--rule);
+  padding: 1.5rem 2rem .8rem;
+  text-align: center;
+  background: var(--paper);
+}
+.masthead-top {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: .6rem;
+  font-family: var(--mono);
+  font-size: .65rem; color: var(--ink-soft);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.masthead-name {
+  font-family: var(--serif);
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 900; letter-spacing: -.02em;
+  line-height: 1; color: var(--ink);
+  text-transform: uppercase;
+}
+.masthead-sub {
+  font-family: var(--body);
+  font-size: .82rem; color: var(--ink-soft);
+  letter-spacing: .25em; text-transform: uppercase;
+  margin-top: .3rem;
+}
+.masthead-rule {
+  border: none; border-top: 1px solid var(--rule);
+  margin: .6rem 0 .3rem;
+}
+.masthead-tagline {
+  font-family: var(--serif);
+  font-style: italic; font-size: .88rem;
+  color: var(--ink-mid);
+}
+
+/* ── TICKER ── */
+.ticker {
+  background: var(--ink);
+  color: var(--paper);
+  padding: .4rem 2rem;
+  display: flex; gap: 3rem; overflow: hidden;
+  font-family: var(--mono); font-size: .68rem;
+  letter-spacing: .05em;
+}
+.ticker-item { white-space: nowrap; flex-shrink: 0; }
+.ticker-item.up   { color: #7fcf7f; }
+.ticker-item.down { color: #cf7f7f; }
+.ticker-label { color: #888; margin-right: .4rem; }
+
+/* ── BREAKING BANNER ── */
+.breaking {
+  background: var(--red);
+  color: white;
+  padding: .5rem 2rem;
+  display: flex; align-items: center; gap: 1rem;
+  font-family: var(--mono); font-size: .72rem;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.breaking-tag {
+  background: white; color: var(--red);
+  font-weight: 500; padding: .15rem .5rem;
+  font-size: .65rem; letter-spacing: .1em;
+  flex-shrink: 0;
+}
+.breaking-text { font-size: .75rem; }
+
+/* ── MAIN GRID ── */
+.paper-body { padding: 1.5rem 2rem; }
+
+/* section rules */
+.section-rule {
+  display: flex; align-items: center; gap: .8rem;
+  margin: 1.5rem 0 .8rem;
+}
+.section-rule-label {
+  font-family: var(--mono); font-size: .62rem;
+  letter-spacing: .15em; text-transform: uppercase;
+  color: var(--paper); background: var(--ink);
+  padding: .2rem .6rem; white-space: nowrap;
+  flex-shrink: 0;
+}
+.section-rule-line {
+  flex: 1; height: 1px; background: var(--ink);
+}
+
+/* ── LEAD STORY ── */
+.lead {
+  display: grid; grid-template-columns: 2fr 1fr;
+  gap: 1.5rem; border-bottom: 2px solid var(--rule);
+  padding-bottom: 1.2rem; margin-bottom: 1.2rem;
+}
+.lead-main {}
+.lead-kicker {
+  font-family: var(--mono); font-size: .65rem;
+  color: var(--red); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: .4rem;
+}
+.lead-headline {
+  font-family: var(--serif); font-weight: 900;
+  font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+  line-height: 1.1; margin-bottom: .6rem; color: var(--ink);
+}
+.lead-deck {
+  font-size: .95rem; font-weight: 600; color: var(--ink-mid);
+  line-height: 1.5; margin-bottom: .8rem;
+  border-left: 3px solid var(--red); padding-left: .8rem;
+}
+.lead-body {
+  font-size: .85rem; line-height: 1.75; color: var(--ink);
+  columns: 2; column-gap: 1.5rem;
+}
+.lead-byline {
+  font-family: var(--mono); font-size: .62rem;
+  color: var(--ink-soft); text-transform: uppercase;
+  letter-spacing: .08em; margin-bottom: .6rem;
+}
+
+.lead-sidebar {
+  border-left: 1px solid var(--ink-soft);
+  padding-left: 1.2rem;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.sidebar-box {
+  border: 1px solid var(--ink-soft); padding: .8rem;
+}
+.sidebar-box-title {
+  font-family: var(--serif); font-weight: 700;
+  font-size: .78rem; border-bottom: 1px solid var(--ink-soft);
+  padding-bottom: .3rem; margin-bottom: .5rem;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.sidebar-box-body {
+  font-size: .75rem; line-height: 1.65; color: var(--ink-mid);
+}
+
+/* ── THREE COLUMNS ── */
+.three-col {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 0; border-bottom: 1px solid var(--ink-soft);
+  padding-bottom: 1.2rem; margin-bottom: 1.2rem;
+}
+.col-story {
+  padding: 0 1.2rem;
+  border-right: 1px solid var(--ink-soft);
+}
+.col-story:first-child { padding-left: 0; }
+.col-story:last-child  { border-right: none; }
+
+.story-kicker {
+  font-family: var(--mono); font-size: .6rem;
+  color: var(--amber); text-transform: uppercase;
+  letter-spacing: .1em; margin-bottom: .3rem;
+}
+.story-headline {
+  font-family: var(--serif); font-weight: 700;
+  font-size: 1.05rem; line-height: 1.25;
+  margin-bottom: .4rem; color: var(--ink);
+}
+.story-body {
+  font-size: .78rem; line-height: 1.7; color: var(--ink-mid);
+}
+.story-byline {
+  font-family: var(--mono); font-size: .58rem;
+  color: var(--ink-soft); margin-top: .5rem;
+  text-transform: uppercase; letter-spacing: .06em;
+}
+
+/* ── TIMELINE BOX ── */
+.timeline-box {
+  background: var(--paper-2);
+  border: 1px solid var(--ink-soft);
+  border-top: 3px solid var(--ink);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+}
+.timeline-box-title {
+  font-family: var(--serif); font-weight: 700;
+  font-size: .9rem; text-transform: uppercase;
+  letter-spacing: .08em; margin-bottom: .8rem;
+  padding-bottom: .4rem; border-bottom: 1px solid var(--ink-soft);
+}
+.tl-row {
+  display: grid; grid-template-columns: 110px 1fr;
+  gap: .8rem; align-items: baseline;
+  padding: .35rem 0; border-bottom: 1px dotted #c0b89a;
+}
+.tl-row:last-child { border-bottom: none; }
+.tl-date {
+  font-family: var(--mono); font-size: .65rem;
+  color: var(--red); text-transform: uppercase;
+  letter-spacing: .06em; font-weight: 500;
+}
+.tl-event { font-size: .78rem; line-height: 1.55; color: var(--ink-mid); }
+.tl-event strong { color: var(--ink); font-weight: 600; }
+
+/* ── MARKET IMPACT BOX ── */
+.market-box {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+}
+.market-box-title {
+  font-family: var(--serif); font-style: italic;
+  font-size: 1rem; font-weight: 700;
+  color: #f0c060; margin-bottom: .8rem;
+  border-bottom: 1px solid #444; padding-bottom: .4rem;
+}
+.market-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: .8rem;
+}
+.market-item { text-align: center; }
+.market-item-name {
+  font-family: var(--mono); font-size: .58rem;
+  color: #888; text-transform: uppercase;
+  letter-spacing: .08em; margin-bottom: .2rem;
+}
+.market-item-val {
+  font-family: var(--serif); font-size: 1.1rem;
+  font-weight: 700;
+}
+.market-item-chg {
+  font-family: var(--mono); font-size: .65rem;
+  margin-top: .1rem;
+}
+.up   { color: #7fcf7f; }
+.down { color: #cf7f7f; }
+.warn { color: #f0c060; }
+
+/* ── PULL QUOTE ── */
+.pull-quote {
+  border-top: 3px solid var(--ink);
+  border-bottom: 3px solid var(--ink);
+  padding: .8rem 1.5rem;
+  margin: 1rem 0;
+  text-align: center;
+}
+.pull-quote-text {
+  font-family: var(--serif); font-style: italic;
+  font-size: 1.15rem; line-height: 1.5; color: var(--ink);
+}
+.pull-quote-attr {
+  font-family: var(--mono); font-size: .62rem;
+  color: var(--ink-soft); margin-top: .4rem;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+
+/* ── OPINION / ANALYSIS BOX ── */
+.opinion-box {
+  border: 2px solid var(--blue);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+}
+.opinion-tag {
+  font-family: var(--mono); font-size: .62rem;
+  color: var(--paper); background: var(--blue);
+  display: inline-block; padding: .15rem .5rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  margin-bottom: .5rem;
+}
+.opinion-headline {
+  font-family: var(--serif); font-weight: 700;
+  font-size: 1rem; margin-bottom: .5rem; color: var(--ink);
+}
+.opinion-body {
+  font-size: .78rem; line-height: 1.7; color: var(--ink-mid);
+}
+.opinion-body strong { color: var(--ink); }
+
+/* ── GPR METER ── */
+.gpr-meter-box {
+  background: var(--paper-2); border: 1px solid var(--ink-soft);
+  padding: 1rem 1.2rem; margin-bottom: 1.2rem;
+}
+.gpr-meter-title {
+  font-family: var(--serif); font-weight: 700;
+  font-size: .82rem; text-transform: uppercase;
+  letter-spacing: .08em; margin-bottom: .8rem;
+}
+.gpr-bar-wrap { margin-bottom: .5rem; }
+.gpr-bar-label {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: .6rem;
+  color: var(--ink-soft); margin-bottom: .2rem;
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.gpr-bar-track {
+  height: 10px; background: #ddd; position: relative;
+  border-radius: 1px; overflow: hidden;
+}
+.gpr-bar-fill {
+  height: 100%; border-radius: 1px;
+  transition: width .8s ease;
+}
+.gpr-note {
+  font-size: .72rem; color: var(--ink-soft);
+  line-height: 1.5; margin-top: .6rem;
+  font-style: italic;
+}
+
+/* ── FOOTER ── */
+.paper-footer {
+  border-top: 3px double var(--rule);
+  padding: .8rem 2rem;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  background: var(--paper-2);
+}
+.footer-note {
+  font-family: var(--mono); font-size: .6rem;
+  color: var(--ink-soft); line-height: 1.6;
+}
+.footer-brand {
+  font-family: var(--serif); font-weight: 900;
+  font-size: 1.1rem; color: var(--ink);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 750px) {
+  .lead { grid-template-columns: 1fr; }
+  .lead-body { columns: 1; }
+  .three-col { grid-template-columns: 1fr; }
+  .col-story { border-right: none; border-bottom: 1px solid var(--ink-soft); padding: .8rem 0; }
+  .market-grid { grid-template-columns: repeat(2, 1fr); }
+  .masthead-name { font-size: 2.2rem; }
+  .paper-body { padding: 1rem; }
+  .ticker { gap: 1.5rem; font-size: .6rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="masthead-top">
+    <span>Wydanie specjalne · Analiza geopolityczna</span>
+    <span>Katowice, maj 2026</span>
+    <span>Projekt UEK 2026 · R. Baraniecki</span>
+  </div>
+  <div class="masthead-name">Geo Monitor</div>
+  <hr class="masthead-rule">
+  <div class="masthead-sub">Dynamiczna analiza ryzyka geopolitycznego i rynków finansowych</div>
+  <hr class="masthead-rule">
+  <div class="masthead-tagline">„Rynki finansowe są termometrem polityki — GPR Index mierzy gorączkę świata"</div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-item"><span class="ticker-label">GPR GLOBAL</span><span class="warn">↑ ~350 (mar 2026)*</span></div>
+  <div class="ticker-item"><span class="ticker-label">ORMUZ</span><span class="down">5% ruchu ↓</span></div>
+  <div class="ticker-item"><span class="ticker-label">VIX</span><span class="up">↓ 16.7</span></div>
+  <div class="ticker-item"><span class="ticker-label">USD/PLN</span><span class="up">↓ 3.72</span></div>
+  <div class="ticker-item"><span class="ticker-label">EUR/PLN</span><span class="up">↓ 4.25</span></div>
+  <div class="ticker-item"><span class="ticker-label">ROPA (WTI)</span><span class="warn">~100 USD</span></div>
+  <div class="ticker-item"><span class="ticker-label">WIG20</span><span class="up">↑ 3 615</span></div>
+  <div class="ticker-item"><span class="ticker-label">JSW</span><span class="warn">stabilnie</span></div>
+  <div class="ticker-item"><span class="ticker-label">KGHM</span><span class="up">↑ 319 zł</span></div>
+</div>
+
+<!-- BREAKING -->
+<div class="breaking">
+  <span class="breaking-tag">Breaking</span>
+  <span class="breaking-text">Maj 2026 · Rozejm USA–Iran trwa — Ormuz faktycznie zamknięty (5% normalnego ruchu) · 7 maja incydent w cieśninie — Iran atakuje US destroyers · Negocjacje w Islamabadzie: Iran „zbliżenie stanowisk" · VIX spada do 16.7</span>
+</div>
+
+<!-- BODY -->
+<div class="paper-body">
+
+  <!-- SECTION RULE -->
+  <div class="section-rule">
+    <span class="section-rule-label">Analiza główna</span>
+    <div class="section-rule-line"></div>
+  </div>
+
+  <!-- LEAD STORY -->
+  <div class="lead">
+    <div class="lead-main">
+      <div class="lead-kicker">Sześć lat danych · Bliski Wschód · Ukraina · COVID · Gospodarka globalna</div>
+      <div class="lead-headline">Sześć lat wstrząsów — jak geopolityka niszczyła i budowała rynki finansowe Śląska</div>
+      <div class="lead-byline">Redakcja Geo Monitor · maj 2026</div>
+      <div class="lead-deck">
+        Projekt SilesiaPulse mierzy sześć lat danych — od pandemicznego załamania w marcu 2020 po operację „Epic Fury" w lutym 2026. Bliski Wschód to najostrzejszy z impulsów, ale nie jedyny. COVID, inwazja Rosji na Ukrainę i kryzys energetyczny 2022 zostawiły w danych równie wyraźne ślady — i razem tworzą pełny obraz tego, jak ryzyko geopolityczne przekłada się na rynki Śląska.
+      </div>
+      <div class="lead-body">
+        <p>W sobotę 7 października 2023 roku o godzinie 6:30 czasu izraelskiego ponad 6 tysięcy bojowników Hamasu przekroczyło granicę Strefy Gazy w 29 miejscach. Zginęło około 1 200 osób — w kibucu Kfar Aza dokonano masakry całych rodzin, w Be'eri zginęło 108 mieszkańców. Na festiwalu muzycznym Nova zamordowano ponad 300 młodych ludzi. Hamas wziął 251 zakładników. Była to największa zbrodnia na Żydach od czasów Holokaustu, a zarazem — z perspektywy analityka rynku — największy jednorazowy skok GPR Index od dekad.</p>
+        <p style="margin-top:.7rem">Izrael odpowiedział operacją „Żelazne Miecze". Przez kolejne miesiące armia systematycznie przemieszczała się z północy na południe Strefy Gazy, bombardując infrastrukturę Hamasu. Do konfliktu włączył się Hezbollah, jemeński ruch Huti rozpoczął ataki na statki na Morzu Czerwonym blokując kluczowy szlak handlowy, Iran uruchomił całą Oś Oporu. Każda z tych eskalacji znajdowała natychmiastowe odbicie w danych — VIX, ceny ropy, USD/PLN.</p>
+        <p style="margin-top:.7rem">Negocjacje prowadzone przez Katar, Egipt i USA wielokrotnie załamywały się. Kruche zawieszenie broni z 19 stycznia 2025 roku nie rozwiązało żadnego ze strukturalnych problemów. Konflikt tlił się dalej, a GPR Index utrzymywał się na podwyższonych poziomach.</p>
+        <p style="margin-top:.7rem">Punktem przełomowym okazał się 28 lutego 2026. USA i Izrael — w ramach operacji „Epic Fury" i „Ryczący Lew" — przeprowadziły zmasowany atak lotniczy na Iran. W wyniku uderzeń zginął Najwyższy Przywódca Ali Chamenei. Iran odpowiedział atakami rakietowymi i dronowymi na Izrael, bazy USA w Bahrajnie, Katarze, Kuwejcie i Jordanii, a także zamknął Cieśninę Ormuz — przez którą przepływa blisko 20% światowej ropy.</p>
+      </div>
+    </div>
+
+    <div class="lead-sidebar">
+      <div class="sidebar-box">
+        <div class="sidebar-box-title">Kluczowe fakty</div>
+        <div class="sidebar-box-body">
+          <p>• <strong>Mar 2020</strong> — COVID; VIX 82 (rekord), WIG20 −35%, USD/PLN 4,30</p>
+          <p style="margin-top:.4rem">• <strong>24.02.2022</strong> — inwazja Rosji na Ukrainę; GPR na poziomach Zimnej Wojny, USD/PLN → 5,06</p>
+          <p style="margin-top:.4rem">• <strong>7.10.2023</strong> — atak Hamas; ~1 200 ofiar, 251 zakładników</p>
+          <p style="margin-top:.4rem">• <strong>Paz. 2023 – sty. 2025</strong> — regionalizacja: Hezbollah, Huti, Oś Oporu</p>
+          <p style="margin-top:.4rem">• <strong>19.01.2025</strong> — kruche zawieszenie broni; 48 zakładników wciąż w Gazie</p>
+          <p style="margin-top:.4rem">• <strong>28.02.2026</strong> — operacja Epic Fury / Ryczący Lew; ginie Chamenei</p>
+          <p style="margin-top:.4rem">• <strong>8.04.2026</strong> — warunkowy rozejm USA–Iran; Liban nadal objęty działaniami</p>
+          <p style="margin-top:.4rem">• <strong>Ormuz</strong> — formalny rozejm od 8 kwietnia; faktycznie tylko 5% normalnego ruchu tankowców</p>
+        </div>
+      </div>
+
+      <div class="sidebar-box" style="background:var(--paper-2)">
+        <div class="sidebar-box-title" style="color:var(--red)">Dlaczego to ważne dla projektu?</div>
+        <div class="sidebar-box-body">
+          Seria zdarzeń 2023–2026 jest <em>najostrzejszym testem</em> modelu analitycznego — ale projekt mierzy <strong>6 lat danych od 2020 roku</strong>. COVID, inwazja na Ukrainę, kryzys energetyczny i Bliski Wschód razem tworzą pełne spektrum geopolitycznych wstrząsów. Pipeline danych projektu rejestruje każdy z tych łańcuchów transmisji w jednej tabeli: GPR, VIX, USD/PLN, ceny akcji JSW i KGHM.
+        </div>
+      </div>
+
+      <!-- GPR METER -->
+      <div class="gpr-meter-box" style="border:none; padding:0; background:none;">
+        <div class="gpr-meter-title">Barometr ryzyka · maj 2026</div>
+
+        <div class="gpr-bar-wrap">
+          <div class="gpr-bar-label"><span>GPR Global</span><span style="color:var(--red);font-weight:500">~350*</span></div>
+          <div class="gpr-bar-track">
+            <div class="gpr-bar-fill" style="width:70%; background:var(--red)"></div>
+          </div>
+        </div>
+
+        <div class="gpr-bar-wrap">
+          <div class="gpr-bar-label"><span>VIX</span><span style="color:var(--blue);font-weight:500">16.7</span></div>
+          <div class="gpr-bar-track">
+            <div class="gpr-bar-fill" style="width:28%; background:var(--blue)"></div>
+          </div>
+        </div>
+
+        <div class="gpr-bar-wrap">
+          <div class="gpr-bar-label"><span>WIG20</span><span style="color:var(--amber);font-weight:500">3 615</span></div>
+          <div class="gpr-bar-track">
+            <div class="gpr-bar-fill" style="width:72%; background:var(--amber)"></div>
+          </div>
+        </div>
+
+        <div class="gpr-note">* GPR Global — dane Caldara &amp; Iacoviello publikowane z ~2-miesięcznym opóźnieniem. Ostatnie potwierdzone dane: marzec 2026 (~412). Wartość szacunkowa dla maja oparta na trendzie deeskalacji po rozejmie 8 kwietnia. GPR powyżej 300 = poziom ekstremalnego ryzyka (porównywalny z wojną w Zatoce 1990–91).<br><br>WIG20: wartość z 22.05.2026. Pasek pokazuje poziom względem 52-tygodniowego maksimum (3 704 pkt).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARKET IMPACT -->
+  <div class="market-box">
+    <div class="market-box-title">Reakcja rynków finansowych · szczyt kryzysu (28.02 – 07.03.2026) — dane historyczne</div>
+    <div class="market-grid">
+      <div class="market-item">
+        <div class="market-item-name">Ropa WTI</div>
+        <div class="market-item-val warn">91.40 USD</div>
+        <div class="market-item-chg down">+18.3% w 5 dni</div>
+      </div>
+      <div class="market-item">
+        <div class="market-item-name">USD/PLN</div>
+        <div class="market-item-val warn">3.61 PLN</div>
+        <div class="market-item-chg down">+2.8% vs pre-atak</div>
+      </div>
+      <div class="market-item">
+        <div class="market-item-name">VIX</div>
+        <div class="market-item-val down">34.7</div>
+        <div class="market-item-chg down">+78% vs sty 2026</div>
+      </div>
+      <div class="market-item">
+        <div class="market-item-name">WIG20</div>
+        <div class="market-item-val down">2 280</div>
+        <div class="market-item-chg down">−8.4% w tyg.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3-COLUMN STORIES -->
+  <div class="section-rule">
+    <span class="section-rule-label">Kontekst i analiza</span>
+    <div class="section-rule-line"></div>
+  </div>
+
+  <!-- KONTEKST I ANALIZA — asymetryczny układ -->
+
+  <!-- wiersz 1: szeroki artykuł o Zatoce (2/3) + wąski o dolarze (1/3) -->
+  <div style="display:grid; grid-template-columns: 2fr 1fr; gap:0; border-bottom:1px solid var(--ink-soft); margin-bottom:1.2rem;">
+
+    <div style="padding: 0 1.2rem 1.2rem 0; border-right:1px solid var(--ink-soft);">
+      <div class="story-kicker">Paraliż Zatoki Perskiej · Analiza główna</div>
+      <div class="story-headline" style="font-size:1.35rem; line-height:1.2;">Iran uderza w całą cywilizację regionu — lotniska, hotele, terminale, infrastruktura krytyczna państw Zatoki</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-top:.6rem;">
+        <div class="story-body">
+          Irańska odpowiedź nie ograniczyła się do celów militarnych. Setki dronów i rakiet balistycznych uderzyły w obiekty cywilne i infrastrukturę krytyczną w państwach Zatoki — bez względu na ich bezpośrednie zaangażowanie w atak. W Dubaju odłamki dosięgły strefy przemysłowej ICAD. Lotnisko w Katarze przechwyciło irańskie pociski wymierzone w infrastrukturę cywilną.
+        </div>
+        <div class="story-body">
+          Ataki objęły Bahrajn, Abu Zabi, Kuwejt i Jordanię. Drony Iranu uderzyły w bazy NATO na Cyprze i niemal spowodowały incydent w tureckiej przestrzeni powietrznej. Jeden port w Omanie — mediatora negocjacji — poniósł straty. Turystyka i gospodarka regionu stanęły. Ubezpieczyciele morscy natychmiast podnieśli składki dla całego akwenu.
+        </div>
+      </div>
+      <div class="story-byline" style="margin-top:.7rem;">Źródła: Reuters · TVN24 · Euronews · 28.02–08.03.2026</div>
+    </div>
+
+    <div style="padding: 0 0 1.2rem 1.2rem;">
+      <div class="story-kicker">Dolar w nowej erze</div>
+      <div class="story-headline">Kryzys podważa mit dolara jako bezpiecznej przystani</div>
+      <div class="story-body" style="margin-top:.5rem;">
+        W maju 2026 USD/PLN oscyluje wokół 3,72. Pomimo eskalacji konfliktu DXY spadał przez większość 2025 roku o 9,4% — i trend ten utrzymuje się. Dług publiczny USA przekroczył 36 bln USD, koszty obsługi wyprzedziły wydatki na obronę, a BRICS aktywnie dywersyfikuje rezerwy z dala od dolara. Relacja GPR → USD/PLN wymaga empirycznej weryfikacji — właśnie temu służy projekt.
+      </div>
+      <div class="story-byline" style="margin-top:.5rem;">Źródła: Fed · Deutsche Bank</div>
+    </div>
+  </div>
+
+  <!-- wiersz 2: wąski o Epic Fury (1/3) + rule pionowa + krótka notka o NATO (2/3 pusta/wypełniona cytatem) -->
+  <div style="display:grid; grid-template-columns: 1fr 2fr; gap:0; border-bottom:1px solid var(--ink-soft); padding-bottom:1.2rem; margin-bottom:1.2rem;">
+
+    <div style="padding: 0 1.2rem 0 0; border-right:1px solid var(--ink-soft);">
+      <div class="story-kicker">Operacja Epic Fury</div>
+      <div class="story-headline">„Uderzenie wyprzedzające" — czy Iran naprawdę zamierzał zaatakować?</div>
+      <div class="story-body" style="margin-top:.5rem;">
+        Oficjalnym uzasadnieniem były irańskie pociski zdolne do ataku na Europę. Dane wywiadowcze Pentagonu z 1 marca 2026 wskazywały jednak, że Iran nie planował ataku jako pierwszy. Marco Rubio przyznał to wprost. Zgromadzenie Bezpieczeństwa ONZ stwierdziło podważenie pokoju. NATO wykluczyło zaangażowanie Sojuszu.
+      </div>
+      <div class="story-byline" style="margin-top:.5rem;">Analiza: R. Baraniecki · Geo Monitor</div>
+    </div>
+
+    <div style="padding: 0 0 0 1.5rem; display:flex; flex-direction:column; justify-content:center;">
+      <div style="border-top:3px solid var(--ink); border-bottom:3px solid var(--ink); padding:.8rem 0; margin-bottom:1rem;">
+        <div style="font-family:var(--serif); font-style:italic; font-size:1.05rem; line-height:1.5; color:var(--ink);">„Największym zagrożeniem nie musi być jedna spektakularna decyzja — lecz stopniowa eskalacja: kolejne uderzenia, odpowiedzi odwetowe i błędne kalkulacje."</div>
+        <div style="font-family:var(--mono); font-size:.6rem; color:var(--ink-soft); margin-top:.4rem; text-transform:uppercase; letter-spacing:.08em;">— Analizy.pl · Maj 2026</div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:.5rem; text-align:center;">
+        <div style="border:1px solid var(--ink-soft); padding:.5rem;">
+          <div style="font-family:var(--serif); font-weight:900; font-size:1.2rem; color:var(--red);">82.69</div>
+          <div style="font-family:var(--mono); font-size:.55rem; color:var(--ink-soft); text-transform:uppercase;">VIX · COVID peak</div>
+        </div>
+        <div style="border:1px solid var(--ink-soft); padding:.5rem;">
+          <div style="font-family:var(--serif); font-weight:900; font-size:1.2rem; color:var(--amber);">5,06</div>
+          <div style="font-family:var(--mono); font-size:.55rem; color:var(--ink-soft); text-transform:uppercase;">USD/PLN · max 2022</div>
+        </div>
+        <div style="border:1px solid var(--ink-soft); padding:.5rem;">
+          <div style="font-family:var(--serif); font-weight:900; font-size:1.2rem; color:var(--blue);">16.7</div>
+          <div style="font-family:var(--mono); font-size:.55rem; color:var(--ink-soft); text-transform:uppercase;">VIX · maj 2026</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SECTION — KRYZYSY 2020-2022 -->
+  <div class="section-rule">
+    <span class="section-rule-label">Sześć lat w danych · 2020–2022</span>
+    <div class="section-rule-line"></div>
+  </div>
+
+  <!-- SZEŚĆ LAT W DANYCH — asymetryczny układ: duży Ukraina + stos COVID/energia -->
+  <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:0; border-bottom:1px solid var(--ink-soft); padding-bottom:1.2rem; margin-bottom:1.2rem;">
+
+    <!-- DUŻY — Ukraina -->
+    <div style="padding: 0 1.5rem 0 0; border-right:1px solid var(--ink-soft);">
+      <div class="story-kicker" style="color:var(--red);">Luty 2022 · Ukraina · Analiza</div>
+      <div class="story-headline" style="font-size:1.3rem; line-height:1.2;">Inwazja zmienia wszystko — Śląsk na pierwszej linii kryzysu, a GPRC_POL odrywa się od świata</div>
+      <div style="border-left:3px solid var(--red); padding-left:.8rem; margin:.7rem 0; font-size:.88rem; font-weight:600; color:var(--ink-mid); line-height:1.5;">
+        Polska reaguje na konflikty wschodnie silniej niż wskazuje globalny indeks GPR. To kluczowa obserwacja projektu SilesiaPulse.
+      </div>
+      <div class="story-body">
+        24 lutego 2022 roku Rosja wkroczyła na pełną skalę do Ukrainy. GPR Index osiągnął poziomy nienotowane od Zimnej Wojny. Dla Śląska skutki były natychmiastowe i niejednoznaczne: ceny węgla koksującego eksplodowały, co krótkoterminowo windowało wycenę JSW — ale koszty energii uderzyły w marże KGHM i PKN Orlen.
+      </div>
+      <div class="story-body" style="margin-top:.6rem;">
+        GPRC_POL — indeks ryzyka konstruowany na bazie polskich mediów — dramatycznie oderwał się od GPR Global. To nie anomalia, lecz sygnał: Polska jako kraj graniczący z Ukrainą reaguje na konflikty wschodnie intensywniej niż wskazuje globalny benchmark. USD/PLN przekroczył 4,70, w szczytowym momencie sięgając historycznego maksimum 5,06 zł. WIG20 stracił ponad 30% od szczytu. KGHM — mimo rosnących cen miedzi — pod silną presją z uwagi na ekspozycję na europejski rynek energii.
+      </div>
+      <div class="story-byline" style="margin-top:.7rem;">Źródła: NBP API · FRED · Stooq · GPR/GPRC_POL (Caldara & Iacoviello)</div>
+    </div>
+
+    <!-- PRAWA KOLUMNA — dwa artykuły w stosie -->
+    <div style="padding-left:1.5rem; display:flex; flex-direction:column; gap:0;">
+
+      <!-- COVID - mniejszy -->
+      <div style="padding-bottom:1rem; border-bottom:1px dotted var(--ink-soft); margin-bottom:1rem;">
+        <div class="story-kicker">Marzec 2020 · COVID-19</div>
+        <div class="story-headline" style="font-size:.95rem;">VIX 82.69 — panika jakiej rynki nie widziały od 1929</div>
+        <div class="story-body" style="margin-top:.4rem;">
+          COVID był pierwszym wielkim testem łańcucha GPR → VIX → rynki lokalne. WIG20 stracił 35% w sześć tygodni. PKN Orlen notował kontrakty ropy WTI na -37 USD. Złoty osłabił się do 4,30 za dolara. GPR skoczył — pandemia była geopolitycznie naładowana: zamknięte granice, wyścig szczepionkowy, napięcia USA–Chiny. Projekt SilesiaPulse rejestruje ten moment jako punkt startowy analizy.
+        </div>
+        <div class="story-byline" style="margin-top:.4rem;">Źródła: CBOE · NBP · Stooq · GPR Index</div>
+      </div>
+
+      <!-- Kryzys energetyczny - jeszcze mniejszy, skondensowany -->
+      <div>
+        <div class="story-kicker">2022–2023 · Kryzys energetyczny</div>
+        <div class="story-headline" style="font-size:.88rem;">WIG20 poniżej 1 400 pkt. Inflacja 17%. Dno bessy.</div>
+        <div class="story-body" style="margin-top:.3rem; font-size:.75rem;">
+          Jesień 2022 przyniosła kulminację kryzysu energetycznego. Ceny gazu w Europie biły rekordy. USD/PLN osiągnął 5,06 PLN. WIG20 na poziomach niewidzianych od dekady. Rok 2023 przyniósł stabilizację — złoty wrócił do 4,00, rynki odrabiały straty — co dostarcza projektu zestawu danych z fazy normalizacji ryzyka.
+        </div>
+        <div class="story-byline" style="margin-top:.3rem;">Źródła: NBP API · GPW · Bankier.pl</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PULL QUOTE -->
+  <div class="pull-quote">
+    <div class="pull-quote-text">„Pandemia, Ukraina, Bliski Wschód — trzy różne kryzysy, jeden mechanizm: GPR rośnie, VIX rośnie, złoty się osłabia, śląskie spółki reagują. Projekt mierzy te zależności nieprzerwanie od 2020 roku."</div>
+    <div class="pull-quote-attr">— R. Baraniecki · SilesiaPulse · Projekt UEK 2026</div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="section-rule">
+    <span class="section-rule-label">Chronologia · 2020–2026</span>
+    <div class="section-rule-line"></div>
+  </div>
+
+  <div class="timeline-box">
+    <div class="timeline-box-title">Sześć lat wstrząsów geopolitycznych — od COVID do otwartej wojny (2020–2026)</div>
+
+    <div class="tl-row">
+      <div class="tl-date">Mar 2020</div>
+      <div class="tl-event"><strong>Pandemia COVID-19</strong> — globalny lockdown. VIX osiąga rekord wszech czasów: <strong>82.69</strong>. GPR Index skacze gwałtownie. WIG20 traci ponad 35% w 6 tygodni. USD/PLN przekracza 4,30. JSW i PKN Orlen w silnym trendzie spadkowym — ceny surowców załamują się.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">2020–2021</div>
+      <div class="tl-event"><strong>Odbicie i nowa normalność</strong> — szczepionki, stymulacja fiskalna, rynki odrabiają straty. GPR Index stabilizuje się, ale pozostaje podwyższony. Inflacja zaczyna rosnąć. WIG20 i KGHM osiągają wieloletnie szczyty na fali globalnego risk-on.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">24 Lut 2022</div>
+      <div class="tl-event"><strong>Inwazja Rosji na Ukrainę</strong> — największy konflikt zbrojny w Europie od 1945. GPR Index skacze do poziomów z Zimnej Wojny. Ceny gazu i zboża eksplodują. GPRC_POL — indeks ryzyka dla Polski — dramatycznie odrywa się od GPR Global. USD/PLN powyżej 4,70. JSW — producent węgla koksującego — paradoksalnie zyskuje; KGHM pod presją.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Wrz–Gru 2022</div>
+      <div class="tl-event"><strong>Kryzys energetyczny · szczyt</strong> — gaz ziemny w Europie bije rekordy cenowe. USD/PLN osiąga historyczne maksimum <strong>5,06 PLN</strong>. WIG20 spada poniżej 1 400 pkt — dołek bessy. Inflacja w Polsce przekracza 17%. PKN Orlen pod skrajną presją marż rafineryjnych.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">2023 (I poł.)</div>
+      <div class="tl-event"><strong>Stabilizacja i odbicie</strong> — inflacja zaczyna opadać. Złoty odrabia straty (USD/PLN wraca w okolice 4,00). WIG20 odrabia większość strat bessy 2022. GPR Index normalizuje się — front ukraiński ustabilizowany. Projekt SilesiaPulse rejestruje ten trend jako bazę analityczną.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">7 Paź 2023</div>
+      <div class="tl-event"><strong>„Czarna Sobota"</strong> — Hamas atakuje południe Izraela. ~1 200 ofiar, 251 zakładników. GPR Index skacze gwałtownie. VIX przekracza 25.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Paź–Gru 2023</div>
+      <div class="tl-event"><strong>Regionalizacja I</strong> — Hezbollah otwiera front północny. Huti atakują statki na Morzu Czerwonym. Oś Oporu aktywna. Ceny ropy rosną.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">2024</div>
+      <div class="tl-event"><strong>Eskalacja i nieudana dyplomacja</strong> — Izrael wkracza do Libanu, ginie Nasrallah. MTS nakazuje wstrzymanie ofensywy — ignorowane. Izrael uderza w Syrię. Upadek Asada. GPRC_POL odchyla się od GPR Global.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Sty 2025</div>
+      <div class="tl-event"><strong>Zawieszenie broni Gaza</strong> — kruche porozumienie z 19.01.2025. 48 zakładników wciąż przetrzymywanych. Konflikt strukturalnie nierozstrzygnięty.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Cze 2025</div>
+      <div class="tl-event"><strong>Dwunastodniowa Wojna</strong> — izraelsko-irańska wymiana uderzeń. USA bombardują irańskie obiekty nuklearne. GPR osiąga poziomy z 1991 r.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Sty–Lut 2026</div>
+      <div class="tl-event"><strong>Maksymalna presja</strong> — USA gromadzą siły w regionie. Iran masakruje protestujących. Negocjacje w Omanie bez rezultatu. Sankcje ONZ „snapback".</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">28 Lut 2026</div>
+      <div class="tl-event"><strong style="color:var(--red)">OPERACJA EPIC FURY / RYCZĄCY LEW</strong> — USA i Izrael atakują Iran. Ginie Chamenei. Iran zamyka Cieśninę Ormuz. Ropa +18%. VIX 34.7. WIG20 −8.4%.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">1–8 Mar 2026</div>
+      <div class="tl-event"><strong>Odwet Iranu</strong> — rakiety i drony na Izrael, bazy USA w Zatoce, atak na lotnisko w Katarze. 3 żołnierzy USA ginie. Iran traci połowę zapasów rakiet.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">8 Kwi 2026</div>
+      <div class="tl-event"><strong>Warunkowy rozejm USA–Iran</strong> — Pakistan pośredniczy. Trump zawiesza ataki na 2 tygodnie; Iran obiecuje otworzyć Cieśninę Ormuz. Ropa spada o 16% w ciągu doby. WIG20 odbija. Rozejm wielokrotnie przedłużany — formalnie trwa do dziś.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">13 Kwi 2026</div>
+      <div class="tl-event"><strong>USA ogłaszają kontr-blokadę</strong> — statki płynące do portów irańskich objęte blokadą US Navy. Ormuz faktycznie nadal zamknięty — ruch morski na poziomie 5% normy. Iran i USA oskarżają się wzajemnie o naruszenie warunków zawieszenia broni.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">7 Maj 2026</div>
+      <div class="tl-event"><strong>Incydent w Cieśninie Ormuz</strong> — Iran atakuje rakietami i dronami trzy niszczyciele US Navy w trakcie tranzytu. CENTCOM odpowiada uderzeniami samoobrony. Żadna jednostka USA nie trafiona. Negocjacje chwilowo zawieszone — następnie wznowione po deklaracji Teheranu o &bdquo;zbliżeniu stanowisk&rdquo;.</div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-date">Maj 2026</div>
+      <div class="tl-event"><strong>Status quo — rozejm trwa, Ormuz faktycznie zamknięty</strong> — Wielka Brytania i Francja goszczą konferencje ws. otwarcia cieśniny. 38 państw podpisuje deklarację gotowości do eskortowania tankowców. VIX spada do ~16.7 — rynki cenują deeskalację. Negocjacje USA–Iran w Islamabadzie trwają; Iran ocenia propozycję USA jako „częściowe zbliżenie stanowisk".</div>
+    </div>
+  </div>
+
+  <!-- ANALYSIS / OPINION -->
+  <div class="section-rule">
+    <span class="section-rule-label">Komentarz analityczny</span>
+    <div class="section-rule-line"></div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.2rem;">
+
+    <div class="opinion-box">
+      <div class="opinion-tag">Analiza · Ryzyko systemowe</div>
+      <div class="opinion-headline">Preludium do kryzysu globalnego — ryzyko eskalacji jako czynnik strukturalny</div>
+      <div class="opinion-body">
+        Seria zdarzeń 2023–2026 nie jest zbiorem przypadkowych incydentów — to <strong>łańcuch przyczynowo-skutkowy</strong> z każdym ogniwem podnoszącym próg kolejnej eskalacji. Hamas był impulsem; nieudana dyplomacja była paliwem; atak na Iran był punktem przełomowym.
+        <br><br>
+        Zamknięcie Ormuz, destabilizacja Libanu, Iraku, Syrii i upadek Asada, osłabienie dolara jako waluty rezerwowej, rosnący dług USA, dedolaryzacja BRICS — te czynniki strukturalne tworzą środowisko, w którym <strong>ryzyko kolejnej eskalacji jest chroniczne, nie epizodyczne</strong>.
+        <br><br>
+        To właśnie uzasadnia projekt analityczny, który mierzy te zależności w sposób ciągły — nie jako reakcję na incydent, lecz jako stały monitoring otoczenia geopolitycznego.
+      </div>
+    </div>
+
+    <div class="opinion-box" style="border-color:var(--red)">
+      <div class="opinion-tag" style="background:var(--red)">Perspektywa · Projekt UEK</div>
+      <div class="opinion-headline">Narzędzie wczesnego ostrzegania — od proof of concept do monitora ryzyka</div>
+      <div class="opinion-body">
+        Projekt akademicki UEK buduje <strong>fundamenty analityczne</strong>: pipeline danych (GPR, VIX, waluty, akcje spółek śląskich), model korelacji i interpretację AI. To proof of concept narzędzia, które w docelowej wersji operacyjnej mogłoby działać jak wyspecjalizowany terminal analityczny — zbliżony funkcją do rozwiązań klasy Bloomberg dla ryzyka geopolitycznego.
+        <br><br>
+        W horyzoncie dalszego rozwoju projektu możliwe jest opracowanie <strong>wskaźnika syntetycznego</strong> — złożonego KPI łączącego GPR, VIX, spread GPRC_POL i dane walutowe w jedną miarę prawdopodobieństwa eskalacji globalnej. Coś w rodzaju analitycznego „zegara ryzyka" — mierzalnego, obiektywnego, aktualizowanego w czasie rzeczywistym.
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /paper-body -->
+
+<!-- PIPELINE RUBRYKA -->
+<div class="paper-body" style="padding-top:0;">
+  <div class="section-rule">
+    <span class="section-rule-label">Architektura systemu</span>
+    <div class="section-rule-line"></div>
+  </div>
+
+  <div class="pipeline-teaser" onclick="window.location.href='index.html'" title="Kliknij aby zobaczyć pełną architekturę systemu">
+    <div class="pt-label">PIPELINE DANYCH · SilesiaPulse</div>
+    <div class="pt-nodes">
+      <div class="pt-node pt-source">
+        <div class="pt-node-icon">⬇</div>
+        <div class="pt-node-name">Źródła</div>
+        <div class="pt-node-sub">NBP · FRED · Stooq · GPR</div>
+      </div>
+      <div class="pt-arrow"><div class="pt-flow"></div></div>
+      <div class="pt-node pt-query">
+        <div class="pt-node-icon">⚙</div>
+        <div class="pt-node-name">Power Query</div>
+        <div class="pt-node-sub">10 zapytań · qry_MASTER</div>
+      </div>
+      <div class="pt-arrow"><div class="pt-flow"></div></div>
+      <div class="pt-node pt-pivot">
+        <div class="pt-node-icon">◈</div>
+        <div class="pt-node-name">Power Pivot</div>
+        <div class="pt-node-sub">DAX · 5 miar · Kalendarz</div>
+      </div>
+      <div class="pt-arrow"><div class="pt-flow"></div></div>
+      <div class="pt-node pt-python">
+        <div class="pt-node-icon">🐍</div>
+        <div class="pt-node-name">Python + AI</div>
+        <div class="pt-node-sub">xlwings · Claude API</div>
+      </div>
+      <div class="pt-arrow"><div class="pt-flow"></div></div>
+      <div class="pt-node pt-bi">
+        <div class="pt-node-icon">▣</div>
+        <div class="pt-node-name">Power BI</div>
+        <div class="pt-node-sub">Dashboard · KPI</div>
+      </div>
+    </div>
+    <div class="pt-cta">
+      <span class="pt-cta-text">Kliknij aby zobaczyć pełną architekturę →</span>
+    </div>
+  </div>
+</div>
+
+<style>
+.pipeline-teaser {
+  border: 1px solid var(--ink-soft);
+  border-top: 3px solid var(--blue);
+  background: var(--paper-2);
+  padding: 1.2rem 1.5rem 1rem;
+  cursor: pointer;
+  transition: border-color .25s, box-shadow .25s;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.pipeline-teaser::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(26,58,92,.04) 100%);
+  pointer-events: none;
+}
+.pipeline-teaser:hover {
+  border-color: var(--blue);
+  box-shadow: 0 2px 16px rgba(26,58,92,.12);
+}
+.pt-label {
+  font-family: var(--mono); font-size: .62rem;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--blue); margin-bottom: 1rem;
+}
+.pt-nodes {
+  display: flex; align-items: center;
+  gap: 0; flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.pt-node {
+  display: flex; flex-direction: column;
+  align-items: center; gap: .25rem;
+  padding: .7rem 1rem;
+  border: 1px solid var(--ink-soft);
+  background: var(--paper);
+  min-width: 110px;
+  transition: border-color .2s, background .2s;
+  flex-shrink: 0;
+}
+.pipeline-teaser:hover .pt-node { border-color: var(--blue); }
+.pt-node-icon {
+  font-size: 1.2rem;
+  color: var(--blue);
+}
+.pt-node-name {
+  font-family: var(--serif); font-size: .78rem; font-weight: 700;
+  color: var(--ink); text-align: center;
+}
+.pt-node-sub {
+  font-family: var(--mono); font-size: .55rem;
+  color: var(--ink-soft); text-align: center; line-height: 1.4;
+}
+.pt-arrow {
+  flex: 1; min-width: 28px; max-width: 48px;
+  height: 2px; background: var(--ink-soft);
+  position: relative; overflow: hidden; flex-shrink: 0;
+}
+.pt-flow {
+  position: absolute; top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, var(--blue) 50%, transparent 100%);
+  animation: flow 1.8s linear infinite;
+}
+@keyframes flow {
+  0%   { left: -100%; }
+  100% { left: 100%; }
+}
+.pt-cta {
+  margin-top: .9rem; text-align: right;
+}
+.pt-cta-text {
+  font-family: var(--mono); font-size: .65rem;
+  color: var(--blue); letter-spacing: .06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--blue);
+  padding-bottom: 1px;
+}
+</style>
+
+<!-- FOOTER -->
+<div class="paper-footer">
+  <div class="footer-note">
+    Materiał analityczny przygotowany na potrzeby projektu końcowego UEK Katowice 2026.<br>
+    Promotor: dr hab. Krzysztof Kania, prof. UE · Student: Robert Baraniecki<br>
+    Źródła: GPR Index (Caldara &amp; Iacoviello 2022) · FRED/CBOE · NBP API · Wikipedia · Euronews · OSW · TVN24
+  </div>
+  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:.6rem;">
+    <div class="footer-brand">Geo Monitor</div>
+    <a href="index.html" target="_blank"
+       style="font-family:var(--mono); font-size:.62rem; color:var(--amber);
+              text-decoration:none; letter-spacing:.08em; text-transform:uppercase;
+              border:1px solid var(--amber-dim); padding:.2rem .6rem;">
+      ← Wróć do prezentacji projektu
+    </a>
+  </div>
+</div>
+
+</body>
+</html>
+
+<!-- deploy 1779394802 -->
