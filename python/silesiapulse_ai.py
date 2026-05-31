@@ -1,5 +1,5 @@
 # =============================================================================
-# geopulse_ai.py — SilesiaPulse / Projekt UEK 2026
+# silesiapulse_ai.py — SilesiaPulse / Projekt UEK 2026
 # Agent: Nexus | Robert Baraniecki | dr hab. K. Kania
 # =============================================================================
 # ARCHITEKTURA:
@@ -19,6 +19,8 @@
 #   6. Zapisuje komentarz zbiorczy do arkusza AI_Summary
 # =============================================================================
 
+from dotenv import load_dotenv
+import os
 import xlwings as xw
 import anthropic
 import pandas as pd
@@ -35,9 +37,10 @@ def polacz_z_excelem():
     return wb
 
 def czytaj_config(wb):
+    load_dotenv()
     ws_config = wb.sheets['Config']
     config = {
-        'api_key':    ws_config.range('B1').value,
+        'api_key':    os.getenv("ANTHROPIC_API_KEY") or ws_config.range('B1').value,
         'model':      ws_config.range('B2').value,
         'max_tokens': int(ws_config.range('B3').value),
         'days_back':  int(ws_config.range('B4').value)
