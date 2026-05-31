@@ -2,6 +2,8 @@
 
 # Pliki tymczasowe Excel
 ~$*.xls*
+*.xlsm
+*.xlsx
 *.tmp
 *.bak
 
