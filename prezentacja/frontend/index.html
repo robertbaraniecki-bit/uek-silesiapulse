@@ -3,1450 +3,958 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Projekt UEK 2026 · Robert Baraniecki</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>SilesiaPulse · Architektura systemu</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:        #0a0e17;
-    --surface:   #111827;
-    --border:    #1e2d45;
-    --amber:     #f59e0b;
-    --amber-dim: #92610a;
-    --blue:      #3b82f6;
-    --blue-dim:  #1e3a5f;
-    --green:     #10b981;
-    --red:       #ef4444;
-    --text:      #e2e8f0;
-    --muted:     #64748b;
-    --accent:    #f59e0b;
-  }
+:root {
+  --bg:       #07090f;
+  --surface:  #0d1117;
+  --border:   #1a2535;
+  --amber:    #f59e0b;
+  --amber-dim:#7a4f06;
+  --blue:     #3b82f6;
+  --blue-dim: #1e3a5f;
+  --green:    #10b981;
+  --green-dim:#064e3b;
+  --red:      #ef4444;
+  --text:     #e2e8f0;
+  --muted:    #4b5a6e;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+  --display:  'Syne', sans-serif;
+}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html { background: var(--bg); }
 
-  html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  cursor: default;
+  user-select: none;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-weight: 300;
-    overflow-x: hidden;
-  }
+/* ── SLIDE ENGINE ── */
+.slides {
+  width: 100%; height: 100%;
+  position: relative;
+}
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 4rem 5rem;
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity .55s cubic-bezier(.4,0,.2,1),
+              transform .55s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+}
+.slide.active {
+  opacity: 1; transform: translateY(0);
+  pointer-events: all;
+}
+.slide.exit-up {
+  opacity: 0; transform: translateY(-32px);
+}
 
-  /* ── NAV ── */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 2.5rem;
-    background: rgba(10,14,23,0.92);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-  }
-  .nav-brand {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800; font-size: .85rem; letter-spacing: .15em;
-    text-transform: uppercase; color: var(--amber);
-  }
-  .nav-links { display: flex; gap: 2rem; }
-  .nav-links a {
-    font-size: .8rem; letter-spacing: .08em; text-transform: uppercase;
-    color: var(--muted); text-decoration: none;
-    transition: color .2s;
-  }
-  .nav-links a:hover { color: var(--text); }
-  .nav-links a.active { color: var(--amber); }
+/* ── GRID BACKGROUND ── */
+.grid-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(59,130,246,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+.glow {
+  position: fixed; z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: opacity 1s;
+}
+.glow-1 {
+  width: 600px; height: 600px;
+  top: -150px; left: -100px;
+  background: radial-gradient(circle, rgba(245,158,11,.07) 0%, transparent 70%);
+}
+.glow-2 {
+  width: 500px; height: 500px;
+  bottom: -100px; right: -80px;
+  background: radial-gradient(circle, rgba(59,130,246,.06) 0%, transparent 70%);
+}
 
-  /* ── IMPULS SECTION ── */
-  #impuls { position: relative; overflow: hidden; }
+/* ── NAV DOTS ── */
+.nav-dots {
+  position: fixed; right: 2rem; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: .8rem;
+  z-index: 100;
+}
+.nav-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--muted);
+  cursor: pointer;
+  transition: background .3s, transform .3s;
+}
+.nav-dot.active {
+  background: var(--amber);
+  transform: scale(1.4);
+}
 
-  .impuls-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 2rem; margin-top: 2rem;
-  }
+/* ── SLIDE COUNTER ── */
+.counter {
+  position: fixed; bottom: 1.8rem; right: 2.5rem;
+  font-family: var(--mono); font-size: .62rem;
+  color: var(--muted); letter-spacing: .1em;
+  z-index: 100;
+}
+.counter span { color: var(--amber); }
 
-  .timeline {
-    display: flex; flex-direction: column; gap: 0;
-  }
-  .tl-item {
-    display: grid; grid-template-columns: 90px 1fr;
-    gap: 1rem; align-items: start;
-    opacity: 0; transform: translateX(-16px);
-    transition: opacity .45s, transform .45s;
-  }
-  .tl-item.visible { opacity: 1; transform: translateX(0); }
+/* ── BACK LINK ── */
+.back-link {
+  position: fixed; top: 1.5rem; left: 2rem;
+  font-family: var(--mono); font-size: .65rem;
+  color: var(--muted); letter-spacing: .08em;
+  text-decoration: none; text-transform: uppercase;
+  z-index: 100;
+  transition: color .2s;
+  cursor: pointer;
+}
+.back-link:hover { color: var(--amber); }
 
-  .tl-date-col { display: flex; flex-direction: column; align-items: flex-end; }
-  .tl-date {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .68rem; color: var(--amber);
-    text-align: right; line-height: 1.3;
-    padding-top: .2rem;
-  }
-  .tl-vline {
-    width: 1px; flex: 1; min-height: 28px;
-    background: var(--border); margin: 4px auto 0;
-  }
-  .tl-item:last-child .tl-vline { display: none; }
+/* ── HINT ── */
+.hint {
+  position: fixed; bottom: 1.8rem; left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono); font-size: .6rem;
+  color: var(--muted); letter-spacing: .1em;
+  z-index: 100;
+  animation: fadeHint 4s ease 1s forwards;
+}
+@keyframes fadeHint {
+  0%   { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
 
-  .tl-content { padding-bottom: 1.5rem; }
-  .tl-dot {
-    display: inline-block; width: 8px; height: 8px;
-    border-radius: 50%; margin-right: .5rem;
-    vertical-align: middle;
-  }
-  .tl-title {
-    font-family: 'Syne', sans-serif;
-    font-size: .95rem; font-weight: 700; margin-bottom: .3rem;
-  }
-  .tl-desc { font-size: .8rem; color: var(--muted); line-height: 1.6; }
+/* ══════════════════════════════════════
+   SLIDE 1 — PYTANIE BADAWCZE + ŁAŃCUCH
+   ══════════════════════════════════════ */
+.s1-inner {
+  max-width: 1100px; width: 100%;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4rem; align-items: center;
+  position: relative; z-index: 1;
+}
+.s1-left {}
+.s1-tag {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-family: var(--mono); font-size: .7rem;
+  color: var(--amber); border: 1px solid var(--amber-dim);
+  padding: .3rem .9rem; margin-bottom: 1.8rem;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.s1-tag::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--amber);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
+.s1-title {
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+  font-weight: 800; line-height: 1.15;
+  margin-bottom: 1.2rem;
+}
+.s1-title em { color: var(--amber); font-style: normal; }
+.s1-sub {
+  font-size: .9rem; color: var(--muted);
+  line-height: 1.7; max-width: 420px;
+  border-left: 2px solid var(--amber-dim);
+  padding-left: 1rem; margin-bottom: 1.8rem;
+}
+.s1-meta {
+  display: flex; gap: 2rem;
+}
+.meta-item { display: flex; flex-direction: column; gap: .2rem; }
+.meta-label {
+  font-family: var(--mono); font-size: .6rem;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+.meta-val { font-size: .85rem; color: var(--text); font-weight: 500; }
 
-  .impuls-right { display: flex; flex-direction: column; gap: 1.5rem; }
+/* Łańcuch przyczynowy */
+.chain {
+  display: flex; flex-direction: column; gap: 0;
+  position: relative; z-index: 1;
+}
+.chain-item {
+  display: flex; align-items: flex-start; gap: 1rem;
+  opacity: 0; transform: translateX(16px);
+  transition: opacity .4s, transform .4s;
+}
+.chain-item.reveal { opacity: 1; transform: translateX(0); }
 
-  .analysis-card {
-    border: 1px solid var(--border); border-left: 3px solid;
-    padding: 1.4rem; background: rgba(255,255,255,.02);
-    opacity: 0; transform: translateY(12px);
-    transition: opacity .4s, transform .4s;
-  }
-  .analysis-card.visible { opacity: 1; transform: translateY(0); }
-  .analysis-card-title {
-    font-family: 'Syne', sans-serif;
-    font-size: .9rem; font-weight: 700; margin-bottom: .7rem;
-  }
-  .analysis-card-body {
-    font-size: .82rem; color: var(--muted); line-height: 1.7;
-  }
-  .analysis-card-body strong { color: var(--text); font-weight: 500; }
+.chain-left {
+  display: flex; flex-direction: column; align-items: center;
+  width: 44px; flex-shrink: 0;
+}
+.chain-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; border: 1.5px solid; flex-shrink: 0;
+  position: relative; z-index: 1;
+}
+.chain-line-v {
+  width: 2px; flex: 1; min-height: 24px;
+  margin: 3px 0;
+}
+.chain-item:last-child .chain-line-v { display: none; }
 
-  /* kontekst card */
-  .context-banner {
-    background: rgba(245,158,11,.06);
-    border: 1px solid var(--amber-dim);
-    border-left: 3px solid var(--amber);
-    padding: 1.2rem 1.5rem;
-    margin-top: 2.5rem;
-    font-size: .82rem; color: var(--muted); line-height: 1.7;
-  }
-  .context-banner strong { color: var(--amber); font-weight: 500; }
+.chain-body { padding: .2rem 0 1.4rem; }
+.chain-trigger {
+  font-family: var(--mono); font-size: .6rem;
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: .25rem;
+}
+.chain-title {
+  font-family: var(--display); font-size: .95rem; font-weight: 700;
+  margin-bottom: .2rem;
+}
+.chain-desc { font-size: .78rem; color: var(--muted); line-height: 1.6; }
+.chain-tags {
+  display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .4rem;
+}
+.tag {
+  font-family: var(--mono); font-size: .58rem;
+  padding: .15rem .5rem; border: 1px solid;
+  border-radius: 2px; letter-spacing: .04em;
+}
 
-  /* ── SECTIONS ── */
-  section { min-height: 100vh; padding: 7rem 2.5rem 4rem; }
+/* ══════════════════════════════════════
+   SLIDE 2 — ANIMOWANY PIPELINE
+   ══════════════════════════════════════ */
+.s2-inner {
+  max-width: 1140px; width: 100%;
+  position: relative; z-index: 1;
+}
+.s2-header {
+  text-align: center; margin-bottom: 3.5rem;
+}
+.s2-num {
+  font-family: var(--mono); font-size: .65rem;
+  color: var(--blue); letter-spacing: .12em; margin-bottom: .5rem;
+}
+.s2-title {
+  font-family: var(--display); font-size: clamp(1.4rem,2.5vw,2rem);
+  font-weight: 700;
+}
 
-  /* ── HERO ── */
-  #hero {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-  }
+/* Pipeline główny */
+.pipeline {
+  display: flex; align-items: stretch; gap: 0;
+  width: 100%;
+  position: relative;
+}
 
-  .hero-grid-bg {
-    position: absolute; inset: 0; z-index: 0;
-    background-image:
-      linear-gradient(rgba(59,130,246,.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(59,130,246,.04) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-  .hero-glow {
-    position: absolute; top: 20%; right: 10%;
-    width: 400px; height: 400px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(245,158,11,.08) 0%, transparent 70%);
-    z-index: 0;
-  }
+/* Węzeł */
+.pnode {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid;
+  padding: 1.4rem 1rem 1.2rem;
+  position: relative;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity .45s, transform .45s, border-color .3s, box-shadow .3s;
+}
+.pnode.reveal { opacity: 1; transform: translateY(0); }
+.pnode.active-node {
+  box-shadow: 0 0 28px -4px currentColor;
+}
 
-  .hero-left { position: relative; z-index: 1; }
+.pnode-num {
+  position: absolute; top: .5rem; left: .7rem;
+  font-family: var(--mono); font-size: .55rem;
+  color: var(--muted); letter-spacing: .06em;
+}
+.pnode-icon {
+  font-size: 1.5rem; margin-bottom: .6rem;
+  line-height: 1;
+  transition: transform .3s;
+}
+.pnode.active-node .pnode-icon { transform: scale(1.15); }
+.pnode-name {
+  font-family: var(--display); font-size: .88rem; font-weight: 700;
+  margin-bottom: .3rem;
+}
+.pnode-tech {
+  font-family: var(--mono); font-size: .58rem;
+  color: var(--muted); line-height: 1.6;
+}
+.pnode-badge {
+  margin-top: .6rem;
+  font-family: var(--mono); font-size: .55rem;
+  padding: .15rem .5rem; border: 1px solid;
+  border-radius: 2px; letter-spacing: .04em;
+}
 
-  .hero-tag {
-    display: inline-flex; align-items: center; gap: .5rem;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .72rem; color: var(--amber);
-    border: 1px solid var(--amber-dim);
-    padding: .3rem .8rem; border-radius: 2px;
-    margin-bottom: 1.5rem;
-    letter-spacing: .05em;
-  }
-  .hero-tag::before {
-    content: ''; width: 6px; height: 6px; border-radius: 50%;
-    background: var(--amber);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%,100% { opacity: 1; }
-    50% { opacity: .3; }
-  }
+/* Konektor między węzłami */
+.pconn {
+  width: 32px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  margin-top: 3px; /* wyrównanie z border-top */
+}
+.pconn-track {
+  width: 100%; height: 2px;
+  background: var(--border);
+  position: relative; overflow: hidden;
+}
+.pconn-packet {
+  position: absolute; top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, var(--amber) 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.pconn-packet.flowing {
+  opacity: 1;
+  animation: packet 1s linear infinite;
+}
+@keyframes packet {
+  0%   { left: -100%; }
+  100% { left: 100%; }
+}
 
-  h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(1.8rem, 3.5vw, 3rem);
-    font-weight: 800; line-height: 1.15;
-    margin-bottom: 1rem;
-  }
-  h1 span { color: var(--amber); }
+/* Wiersz szczegółów pod pipeline */
+.pipe-details {
+  display: flex; gap: 0;
+  margin-top: .8rem;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.pipe-detail {
+  flex: 1; padding: .8rem 1rem;
+  border-right: 1px solid var(--border);
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .35s, transform .35s, background .3s;
+}
+.pipe-detail:last-child { border-right: none; }
+.pipe-detail.reveal { opacity: 1; transform: translateY(0); }
+.pipe-detail.active-detail { background: rgba(59,130,246,.05); }
+.pd-label {
+  font-family: var(--mono); font-size: .58rem;
+  color: var(--muted); letter-spacing: .08em;
+  text-transform: uppercase; margin-bottom: .4rem;
+}
+.pd-items {
+  display: flex; flex-direction: column; gap: .2rem;
+}
+.pd-item {
+  font-family: var(--mono); font-size: .65rem;
+  color: var(--text); line-height: 1.4;
+}
+.pd-item::before {
+  content: '→ '; color: var(--amber); font-size: .6rem;
+}
 
-  .hero-sub {
-    font-size: .95rem; color: var(--muted); line-height: 1.7;
-    max-width: 480px; margin-bottom: 2rem;
-  }
+/* ══════════════════════════════════════
+   SLIDE 3 — WYNIKI I WNIOSKI
+   ══════════════════════════════════════ */
+.s3-inner {
+  max-width: 1100px; width: 100%;
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 3rem; align-items: start;
+}
+.s3-left {}
+.s3-num {
+  font-family: var(--mono); font-size: .65rem;
+  color: var(--amber); letter-spacing: .12em; margin-bottom: .6rem;
+}
+.s3-title {
+  font-family: var(--display); font-size: clamp(1.5rem,2.6vw,2.1rem);
+  font-weight: 800; line-height: 1.2; margin-bottom: 1.2rem;
+}
+.s3-title em { color: var(--amber); font-style: normal; }
 
-  .hero-meta {
-    display: flex; gap: 2rem; flex-wrap: wrap;
-  }
-  .meta-item { display: flex; flex-direction: column; gap: .2rem; }
-  .meta-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .65rem; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--muted);
-  }
-  .meta-value { font-size: .85rem; color: var(--text); font-weight: 500; }
+.conclusions {
+  display: flex; flex-direction: column; gap: .8rem;
+}
+.concl {
+  display: flex; gap: 1rem; align-items: flex-start;
+  padding: .9rem 1rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid;
+  background: rgba(255,255,255,.015);
+  opacity: 0; transform: translateX(-12px);
+  transition: opacity .4s, transform .4s;
+}
+.concl.reveal { opacity: 1; transform: translateX(0); }
+.concl-num {
+  font-family: var(--mono); font-size: .7rem; font-weight: 600;
+  flex-shrink: 0; width: 24px; padding-top: .05rem;
+}
+.concl-body {}
+.concl-label {
+  font-family: var(--mono); font-size: .6rem;
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: .2rem;
+}
+.concl-text {
+  font-size: .82rem; color: var(--muted); line-height: 1.6;
+}
+.concl-text strong { color: var(--text); font-weight: 500; }
 
-  /* hero right — pytanie badawcze */
-  .hero-right {
-    position: relative; z-index: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--amber);
-    padding: 2rem;
-  }
-  .card-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .65rem; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--amber);
-    margin-bottom: 1rem;
-  }
-  .question {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.15rem; font-weight: 600;
-    line-height: 1.5; color: var(--text);
-    margin-bottom: 1.5rem;
-  }
-  .significance {
-    font-size: .85rem; color: var(--muted); line-height: 1.7;
-    border-left: 2px solid var(--amber-dim); padding-left: 1rem;
-  }
+/* Analytic levels */
+.s3-right {}
+.levels-title {
+  font-family: var(--mono); font-size: .62rem;
+  color: var(--muted); letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 1rem;
+}
+.levels {
+  display: flex; flex-direction: column; gap: .5rem;
+  margin-bottom: 2rem;
+}
+.level {
+  display: flex; align-items: center; gap: .9rem;
+  padding: .8rem 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  opacity: 0; transform: translateX(12px);
+  transition: opacity .4s, transform .4s;
+}
+.level.reveal { opacity: 1; transform: translateX(0); }
+.level-num {
+  font-family: var(--mono); font-size: .65rem; font-weight: 600;
+  width: 20px; flex-shrink: 0;
+}
+.level-name {
+  font-family: var(--display); font-size: .88rem; font-weight: 700;
+  flex: 1;
+}
+.level-example {
+  font-family: var(--mono); font-size: .58rem;
+  color: var(--muted); text-align: right; line-height: 1.4;
+}
 
-  /* ── CHAIN ── */
-  #lancuch {
-    background: var(--surface);
-    position: relative;
-  }
-  #lancuch::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, var(--bg) 0%, transparent 10%, transparent 90%, var(--bg) 100%);
-    pointer-events: none; z-index: 0;
-  }
+/* KPI row */
+.kpi-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem;
+  margin-top: .5rem;
+}
+.kpi {
+  border: 1px solid var(--border); border-top: 2px solid;
+  padding: .8rem; text-align: center;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .35s, transform .35s;
+}
+.kpi.reveal { opacity: 1; transform: translateY(0); }
+.kpi-val {
+  font-family: var(--display); font-size: 1.3rem; font-weight: 800;
+  margin-bottom: .2rem;
+}
+.kpi-label {
+  font-family: var(--mono); font-size: .55rem;
+  color: var(--muted); letter-spacing: .06em; text-transform: uppercase;
+  line-height: 1.4;
+}
 
-  .section-header {
-    position: relative; z-index: 1;
-    margin-bottom: 3rem;
-  }
-  .section-num {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .7rem; color: var(--amber); letter-spacing: .1em;
-    margin-bottom: .5rem;
-  }
-  h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(1.4rem, 2.5vw, 2rem);
-    font-weight: 700;
-  }
-
-  .chain-wrapper {
-    position: relative; z-index: 1;
-    display: flex; flex-direction: column; gap: 0;
-    max-width: 780px; margin: 0 auto;
-  }
-
-  .chain-step {
-    display: grid; grid-template-columns: 56px 1fr;
-    gap: 1.5rem; align-items: start;
-    opacity: 0; transform: translateX(-20px);
-    transition: opacity .5s, transform .5s;
-  }
-  .chain-step.visible { opacity: 1; transform: translateX(0); }
-
-  .chain-icon-col {
-    display: flex; flex-direction: column; align-items: center;
-  }
-  .chain-icon {
-    width: 44px; height: 44px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem;
-    border: 2px solid;
-    flex-shrink: 0;
-  }
-  .chain-line {
-    width: 2px; flex: 1; min-height: 40px;
-    background: linear-gradient(180deg, var(--border) 0%, transparent 100%);
-    margin: 4px 0;
-  }
-  .chain-step:last-child .chain-line { display: none; }
-
-  .chain-content { padding: .25rem 0 2rem; }
-  .chain-trigger {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .68rem; letter-spacing: .08em;
-    text-transform: uppercase; margin-bottom: .4rem;
-  }
-  .chain-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.05rem; font-weight: 700; margin-bottom: .4rem;
-  }
-  .chain-desc { font-size: .85rem; color: var(--muted); line-height: 1.6; }
-  .chain-indicators {
-    display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem;
-  }
-  .chip {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .68rem; padding: .2rem .6rem;
-    border-radius: 2px; border: 1px solid;
-  }
-
-  /* color variants */
-  .c-red   { color: #ef4444; border-color: #7f1d1d; background: rgba(239,68,68,.07); }
-  .c-amber { color: var(--amber); border-color: var(--amber-dim); background: rgba(245,158,11,.07); }
-  .c-blue  { color: var(--blue); border-color: var(--blue-dim); background: rgba(59,130,246,.07); }
-  .c-green { color: var(--green); border-color: #064e3b; background: rgba(16,185,129,.07); }
-  .c-muted { color: var(--muted); border-color: var(--border); }
-
-  .icon-red   { border-color: #7f1d1d; background: rgba(239,68,68,.1); }
-  .icon-amber { border-color: var(--amber-dim); background: rgba(245,158,11,.1); }
-  .icon-blue  { border-color: var(--blue-dim); background: rgba(59,130,246,.1); }
-  .icon-green { border-color: #064e3b; background: rgba(16,185,129,.1); }
-
-  /* ── PIPELINE ── */
-  #pipeline { position: relative; overflow: hidden; }
-
-  .pipeline-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0;
-    position: relative;
-    margin-top: 2rem;
-  }
-
-  .pipe-col {
-    display: flex; flex-direction: column;
-    opacity: 0; transform: translateY(16px);
-    transition: opacity .4s, transform .4s;
-  }
-  .pipe-col.visible { opacity: 1; transform: translateY(0); }
-
-  .pipe-header {
-    padding: 1.2rem 1rem;
-    border-top: 3px solid;
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    min-height: 90px;
-  }
-  .pipe-col:last-child .pipe-header { border-right: none; }
-  .pipe-num {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .62rem; letter-spacing: .1em;
-    text-transform: uppercase; margin-bottom: .4rem;
-  }
-  .pipe-name {
-    font-family: 'Syne', sans-serif;
-    font-size: .9rem; font-weight: 700; line-height: 1.3;
-  }
-
-  .pipe-items {
-    flex: 1;
-    border-right: 1px solid var(--border);
-    padding: .75rem;
-    display: flex; flex-direction: column; gap: .4rem;
-  }
-  .pipe-col:last-child .pipe-items { border-right: none; }
-
-  .pipe-item {
-    font-size: .78rem; padding: .5rem .7rem;
-    background: rgba(255,255,255,.02);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    line-height: 1.4;
-    cursor: default;
-    transition: background .2s, border-color .2s;
-  }
-  .pipe-item:hover {
-    background: rgba(255,255,255,.05);
-    border-color: var(--muted);
-  }
-  .pipe-item-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .62rem; color: var(--muted);
-    display: block; margin-bottom: .15rem;
-  }
-
-  .pipe-status {
-    padding: .75rem 1rem;
-    border-top: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .68rem; letter-spacing: .05em;
-    text-transform: uppercase;
-  }
-  .pipe-col:last-child .pipe-status { border-right: none; }
-  .status-done  { color: var(--green); }
-  .status-next  { color: var(--amber); }
-  .status-plan  { color: var(--muted); }
-
-  /* arrow between cols */
-  .pipe-arrow {
-    position: absolute; top: 42px;
-    font-size: .9rem; color: var(--muted);
-    z-index: 2;
-    transform: translateX(-50%);
-  }
-
-  /* ── DANE ── */
-  #dane { background: var(--surface); }
-
-  .sources-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-top: 2rem;
-  }
-
-  .source-card {
-    border: 1px solid var(--border);
-    border-left: 3px solid;
-    padding: 1.5rem;
-    background: rgba(255,255,255,.02);
-    opacity: 0; transform: translateY(12px);
-    transition: opacity .4s, transform .4s;
-  }
-  .source-card.visible { opacity: 1; transform: translateY(0); }
-
-  .source-top {
-    display: flex; align-items: center;
-    justify-content: space-between; margin-bottom: 1rem;
-  }
-  .source-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem; font-weight: 700;
-  }
-  .source-mode {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .65rem; padding: .2rem .6rem;
-    border-radius: 2px; border: 1px solid;
-  }
-  .source-what {
-    font-size: .82rem; color: var(--muted);
-    margin-bottom: .8rem; line-height: 1.6;
-  }
-  .source-arg {
-    font-size: .78rem; color: var(--text);
-    background: rgba(0,0,0,.3); padding: .8rem 1rem;
-    border-left: 2px solid; font-style: italic;
-    line-height: 1.6;
-  }
-
-  /* ── FOOTER ── */
-  footer {
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    padding: 2rem 2.5rem;
-    display: flex; align-items: center;
-    justify-content: space-between;
-  }
-  .footer-left {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .72rem; color: var(--muted);
-  }
-  .footer-dates {
-    display: flex; gap: 2rem;
-  }
-  .footer-date { display: flex; flex-direction: column; gap: .15rem; }
-  .footer-date-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .6rem; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--muted);
-  }
-  .footer-date-val {
-    font-family: 'Syne', sans-serif;
-    font-size: .85rem; font-weight: 600;
-  }
-  .date-consult { color: var(--amber); }
-  .date-defense { color: var(--green); }
-
-  /* ── SCROLL DOTS ── */
-  .scroll-nav {
-    position: fixed; right: 1.5rem; top: 50%;
-    transform: translateY(-50%);
-    display: flex; flex-direction: column; gap: .6rem;
-    z-index: 200;
-  }
-  .scroll-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--border); cursor: pointer;
-    transition: background .2s, transform .2s;
-  }
-  .scroll-dot.active {
-    background: var(--amber);
-    transform: scale(1.5);
-  }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 900px) {
-    #hero { grid-template-columns: 1fr; }
-    .pipeline-grid { grid-template-columns: 1fr 1fr; }
-    .sources-grid { grid-template-columns: 1fr; }
-    nav { padding: 1rem 1.2rem; }
-    section { padding: 6rem 1.2rem 3rem; }
-  }
+/* Geo Pulse badge */
+.gp-badge {
+  margin-top: 1.5rem;
+  border: 1px solid var(--blue-dim);
+  border-left: 3px solid var(--blue);
+  padding: .9rem 1.1rem;
+  background: rgba(59,130,246,.04);
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .4s .6s, transform .4s .6s;
+}
+.gp-badge.reveal { opacity: 1; transform: translateY(0); }
+.gp-tag {
+  font-family: var(--mono); font-size: .58rem;
+  color: var(--blue); letter-spacing: .1em; text-transform: uppercase;
+  margin-bottom: .4rem;
+}
+.gp-text {
+  font-size: .8rem; color: var(--muted); line-height: 1.6;
+}
+.gp-text strong { color: var(--text); font-weight: 500; }
 </style>
 </head>
 <body>
 
+<div class="grid-bg"></div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
 <!-- NAV -->
-<nav>
-  <div class="nav-brand">Geo&thinsp;Risk · UEK&thinsp;2026</div>
-  <div class="nav-links">
-    <a href="#hero">Intro</a>
-    <a href="#lancuch">Łańcuch</a>
-    <a href="#pipeline">Pipeline</a>
-    <a href="#dane">Dane</a>
-    <a href="#impuls" style="color:var(--amber)">Impuls</a>
-  </div>
-</nav>
+<a class="back-link" onclick="window.location.href='gazeta.html'">← Geo Monitor</a>
 
-<!-- SCROLL DOTS -->
-<div class="scroll-nav">
-  <div class="scroll-dot active" onclick="scrollTo('#hero')"></div>
-  <div class="scroll-dot" onclick="scrollTo('#lancuch')"></div>
-  <div class="scroll-dot" onclick="scrollTo('#pipeline')"></div>
-  <div class="scroll-dot" onclick="scrollTo('#dane')"></div>
-  <div class="scroll-dot" onclick="scrollTo('#impuls')"></div>
+<div class="nav-dots" id="nav-dots">
+  <div class="nav-dot active" onclick="goTo(0)"></div>
+  <div class="nav-dot" onclick="goTo(1)"></div>
+  <div class="nav-dot" onclick="goTo(2)"></div>
 </div>
 
-<!-- ════════════════════════════════ HERO ════════════════════════════════ -->
-<section id="hero">
-  <div class="hero-grid-bg"></div>
-  <div class="hero-glow"></div>
+<div class="counter"><span id="cur">01</span> / 03</div>
+<div class="hint">↓ Scroll lub strzałki aby przejść dalej</div>
 
-  <div class="hero-left">
-    <div class="hero-tag">Projekt końcowy UEK Katowice · 2026</div>
+<!-- ══════════════════ SLIDES ══════════════════ -->
+<div class="slides" id="slides">
 
-    <h1>
-      Dynamiczna analiza<br>
-      <span>czynników ryzyka</span><br>
-      geopolitycznego
-    </h1>
+<!-- ─── SLIDE 1 ─── -->
+<div class="slide active" id="slide-0">
+  <div class="s1-inner">
 
-    <p class="hero-sub">
-      Zautomatyzowany pipeline danych badający wpływ globalnych wydarzeń
-      geopolitycznych na kluczowe wskaźniki finansowe Śląska —
-      od GPR Index po notowania JSW, KGHM i PKN Orlen.
-    </p>
-
-    <div class="hero-meta">
-      <div class="meta-item">
-        <span class="meta-label">Student</span>
-        <span class="meta-value">Robert Baraniecki</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-label">Promotor</span>
-        <span class="meta-value">dr hab. K. Kania, prof. UE</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-label">Uczelnia</span>
-        <span class="meta-value">UEK Katowice</span>
+    <div class="s1-left">
+      <div class="s1-tag">SilesiaPulse · Projekt UEK 2026</div>
+      <h1 class="s1-title">
+        Jak <em>ryzyko geopolityczne</em><br>
+        przekłada się na rynki<br>
+        Śląska?
+      </h1>
+      <p class="s1-sub">
+        Zautomatyzowany pipeline danych mierzący korelacje między globalnymi wskaźnikami ryzyka a kluczowymi spółkami regionu — JSW, KGHM, PKN Orlen, WIG20.
+      </p>
+      <div class="s1-meta">
+        <div class="meta-item">
+          <span class="meta-label">Student</span>
+          <span class="meta-val">Robert Baraniecki</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Promotor</span>
+          <span class="meta-val">dr hab. K. Kania</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Obrona</span>
+          <span class="meta-val">11.07.2026</span>
+        </div>
       </div>
     </div>
+
+    <div class="chain" id="chain">
+
+      <div class="chain-item" style="--delay:.1s">
+        <div class="chain-left">
+          <div class="chain-icon" style="border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,.08)">🌐</div>
+          <div class="chain-line-v" style="background:linear-gradient(180deg,#ef4444,#f59e0b)"></div>
+        </div>
+        <div class="chain-body">
+          <div class="chain-trigger" style="color:#ef4444">Impuls</div>
+          <div class="chain-title">Wydarzenie geopolityczne</div>
+          <div class="chain-desc">Konflikt, sankcje, napięcie dyplomatyczne</div>
+          <div class="chain-tags">
+            <span class="tag" style="border-color:#ef444450;color:#ef4444">GPR ↑</span>
+            <span class="tag" style="border-color:#ef444450;color:#ef4444">GPRC_POL ↑</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chain-item" style="--delay:.25s">
+        <div class="chain-left">
+          <div class="chain-icon" style="border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,.08)">📊</div>
+          <div class="chain-line-v" style="background:linear-gradient(180deg,#f59e0b,#3b82f6)"></div>
+        </div>
+        <div class="chain-body">
+          <div class="chain-trigger" style="color:#f59e0b">Transmisja globalna</div>
+          <div class="chain-title">Rynki reagują</div>
+          <div class="chain-desc">Wzrost niepewności → ucieczka w bezpieczne aktywa</div>
+          <div class="chain-tags">
+            <span class="tag" style="border-color:#f59e0b50;color:#f59e0b">VIX ↑</span>
+            <span class="tag" style="border-color:#f59e0b50;color:#f59e0b">USD/PLN ↑</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chain-item" style="--delay:.4s">
+        <div class="chain-left">
+          <div class="chain-icon" style="border-color:#3b82f6;color:#3b82f6;background:rgba(59,130,246,.08)">⚙</div>
+          <div class="chain-line-v" style="background:linear-gradient(180deg,#3b82f6,#10b981)"></div>
+        </div>
+        <div class="chain-body">
+          <div class="chain-trigger" style="color:#3b82f6">Transmisja lokalna</div>
+          <div class="chain-title">Surowce i spółki śląskie</div>
+          <div class="chain-desc">Ropa, węgiel, miedź → wyceny producentów</div>
+          <div class="chain-tags">
+            <span class="tag" style="border-color:#3b82f650;color:#3b82f6">JSW</span>
+            <span class="tag" style="border-color:#3b82f650;color:#3b82f6">KGHM</span>
+            <span class="tag" style="border-color:#3b82f650;color:#3b82f6">PKN</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chain-item" style="--delay:.55s">
+        <div class="chain-left">
+          <div class="chain-icon" style="border-color:#10b981;color:#10b981;background:rgba(16,185,129,.08)">▣</div>
+          <div class="chain-line-v"></div>
+        </div>
+        <div class="chain-body">
+          <div class="chain-trigger" style="color:#10b981">Wynik</div>
+          <div class="chain-title">WIG20 i gospodarka Śląska</div>
+          <div class="chain-desc">Mierzalny, kwantyfikowalny wpływ na rynek regionalny</div>
+          <div class="chain-tags">
+            <span class="tag" style="border-color:#10b98150;color:#10b981">WIG20</span>
+            <span class="tag" style="border-color:#10b98150;color:#10b981">Komentarz AI</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /chain -->
   </div>
+</div><!-- /slide-0 -->
 
-  <div class="hero-right">
-    <div class="card-label">// Pytanie badawcze</div>
-    <div class="question">
-      Jak globalne wydarzenia geopolityczne przekładają się
-      na wskaźniki finansowe istotne dla gospodarki Śląska?
-    </div>
-    <div class="significance">
-      Region Śląski — przemysł ciężki wrażliwy na ceny surowców,
-      bliskość granicy wschodniej, znaczący udział sektora energetycznego.
-      Wyniki projektu mogą być praktycznie stosowane przez inwestorów
-      regionalnych oraz analityków sektora publicznego.
-    </div>
-  </div>
-</section>
 
-<!-- ════════════════════════════════ ŁAŃCUCH ════════════════════════════ -->
-<section id="lancuch">
-  <div class="section-header">
-    <div class="section-num">// 01 · Mechanizm transmisji</div>
-    <h2>Łańcuch przyczynowo‑skutkowy</h2>
-  </div>
-
-  <div class="chain-wrapper">
-
-    <div class="chain-step">
-      <div class="chain-icon-col">
-        <div class="chain-icon icon-red">⚡</div>
-        <div class="chain-line"></div>
-      </div>
-      <div class="chain-content">
-        <div class="chain-trigger c-red">Impuls · Zdarzenie</div>
-        <div class="chain-title">Wydarzenie geopolityczne</div>
-        <div class="chain-desc">Konflikt zbrojny, sankcje gospodarcze, napięcia dyplomatyczne — czynnik inicjujący reakcję rynkową.</div>
-        <div class="chain-indicators">
-          <span class="chip c-red">GPR Index ↑</span>
-          <span class="chip c-red">GPRC_POL ↑</span>
-        </div>
-      </div>
+<!-- ─── SLIDE 2 — PIPELINE ─── -->
+<div class="slide" id="slide-1">
+  <div class="s2-inner">
+    <div class="s2-header">
+      <div class="s2-num">// 02 · Architektura</div>
+      <h2 class="s2-title">Zautomatyzowany pipeline danych</h2>
     </div>
 
-    <div class="chain-step">
-      <div class="chain-icon-col">
-        <div class="chain-icon icon-amber">📡</div>
-        <div class="chain-line"></div>
-      </div>
-      <div class="chain-content">
-        <div class="chain-trigger c-amber">Warstwa globalna</div>
-        <div class="chain-title">Reakcja rynków globalnych</div>
-        <div class="chain-desc">Wzrost awersji do ryzyka globalnego — inwestorzy uciekają w bezpieczne aktywa, dolar się umacnia.</div>
-        <div class="chain-indicators">
-          <span class="chip c-amber">VIX ↑</span>
-          <span class="chip c-amber">USD/PLN ↑</span>
-          <span class="chip c-amber">EUR/PLN ↑</span>
-        </div>
-      </div>
-    </div>
+    <div class="pipeline" id="pipeline">
 
-    <div class="chain-step">
-      <div class="chain-icon-col">
-        <div class="chain-icon icon-blue">🏭</div>
-        <div class="chain-line"></div>
+      <!-- NODE 1 — Źródła -->
+      <div class="pnode" id="pn0" style="border-top-color:#ef4444; color:#ef4444;">
+        <div class="pnode-num">01</div>
+        <div class="pnode-icon">⬇</div>
+        <div class="pnode-name">Źródła danych</div>
+        <div class="pnode-tech">NBP API<br>FRED API<br>Stooq CSV<br>GPR Index</div>
+        <div class="pnode-badge" style="border-color:#ef444460;color:#ef4444">4 źródła</div>
       </div>
-      <div class="chain-content">
-        <div class="chain-trigger c-blue">Warstwa surowcowa</div>
-        <div class="chain-title">Reakcja spółek śląskich</div>
-        <div class="chain-desc">Ceny surowców zmieniają rentowność kluczowych spółek regionu — węgiel, miedź, ropa naftowa.</div>
-        <div class="chain-indicators">
-          <span class="chip c-blue">JSW</span>
-          <span class="chip c-blue">KGHM</span>
-          <span class="chip c-blue">PKN Orlen</span>
-        </div>
-      </div>
-    </div>
 
-    <div class="chain-step">
-      <div class="chain-icon-col">
-        <div class="chain-icon icon-green">📊</div>
-        <div class="chain-line"></div>
-      </div>
-      <div class="chain-content">
-        <div class="chain-trigger c-green">Warstwa rynkowa</div>
-        <div class="chain-title">Reakcja polskiego rynku</div>
-        <div class="chain-desc">Polski indeks szerokiego rynku absorbuje zmiany — barometr ogólnego sentymentu inwestycyjnego.</div>
-        <div class="chain-indicators">
-          <span class="chip c-green">WIG20 ↕</span>
-        </div>
-      </div>
-    </div>
+      <div class="pconn"><div class="pconn-track"><div class="pconn-packet" id="pk0"></div></div></div>
 
-    <div class="chain-step">
-      <div class="chain-icon-col">
-        <div class="chain-icon icon-amber">🎯</div>
-        <div class="chain-line"></div>
+      <!-- NODE 2 — Power Query -->
+      <div class="pnode" id="pn1" style="border-top-color:#f59e0b; color:#f59e0b;">
+        <div class="pnode-num">02</div>
+        <div class="pnode-icon">⚙</div>
+        <div class="pnode-name">Power Query</div>
+        <div class="pnode-tech">M Language<br>10 zapytań<br>Transformacja<br>Scalanie</div>
+        <div class="pnode-badge" style="border-color:#f59e0b60;color:#f59e0b">qry_MASTER</div>
       </div>
-      <div class="chain-content">
-        <div class="chain-trigger c-amber">Wniosek analityczny</div>
-        <div class="chain-title">Wymierny wpływ na gospodarkę Śląska</div>
-        <div class="chain-desc">
-          Korelacja między GPR Index a zachowaniem kluczowych wskaźników finansowych regionu
-          jest mierzalna i weryfikowalna empirycznie — co stanowi podstawę praktycznych rekomendacji.
-        </div>
-        <div class="chain-indicators">
-          <span class="chip c-amber">r &gt; 0.7 (GPR ↔ VIX)</span>
-          <span class="chip c-muted">zakres 2020–2026</span>
-        </div>
-      </div>
-    </div>
 
-  </div>
-</section>
+      <div class="pconn"><div class="pconn-track"><div class="pconn-packet" id="pk1"></div></div></div>
 
-<!-- ════════════════════════════════ PIPELINE ═══════════════════════════ -->
-<section id="pipeline">
-  <div class="section-header">
-    <div class="section-num">// 02 · Architektura techniczna</div>
-    <h2>Pipeline danych · Stack technologiczny</h2>
-  </div>
+      <!-- NODE 3 — Power Pivot -->
+      <div class="pnode" id="pn2" style="border-top-color:#a78bfa; color:#a78bfa;">
+        <div class="pnode-num">03</div>
+        <div class="pnode-icon">◈</div>
+        <div class="pnode-name">Power Pivot</div>
+        <div class="pnode-tech">DAX · 5 miar<br>Tabela Kalendarza<br>Model relacyjny</div>
+        <div class="pnode-badge" style="border-color:#a78bfa60;color:#a78bfa">Risk Label</div>
+      </div>
 
-  <div class="pipeline-grid" id="pipelineGrid">
+      <div class="pconn"><div class="pconn-track"><div class="pconn-packet" id="pk2"></div></div></div>
 
-    <!-- COL 1 -->
-    <div class="pipe-col" style="transition-delay:.0s">
-      <div class="pipe-header" style="border-color:#3b82f6">
-        <div class="pipe-num c-blue">01 · Źródła</div>
-        <div class="pipe-name">Pozyskiwanie danych</div>
+      <!-- NODE 4 — Python + AI -->
+      <div class="pnode" id="pn3" style="border-top-color:#10b981; color:#10b981;">
+        <div class="pnode-num">04</div>
+        <div class="pnode-icon">🐍</div>
+        <div class="pnode-name">Python + AI</div>
+        <div class="pnode-tech">xlwings<br>Claude API<br>VBA trigger</div>
+        <div class="pnode-badge" style="border-color:#10b98160;color:#10b981">Komentarz_AI</div>
       </div>
-      <div class="pipe-items">
-        <div class="pipe-item">
-          <span class="pipe-item-label">API · auto</span>
-          NBP · EUR/PLN · USD/PLN
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">API · auto</span>
-          FRED · VIX (CBOE)
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">XLS · semi-auto</span>
-          GPR Index · GPRC_POL
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">CSV · semi-auto</span>
-          Stooq · WIG20 · JSW · KGHM · PKN
-        </div>
-      </div>
-      <div class="pipe-status status-done">✓ Gotowe</div>
-    </div>
 
-    <!-- COL 2 -->
-    <div class="pipe-col" style="transition-delay:.1s">
-      <div class="pipe-header" style="border-color:#f59e0b">
-        <div class="pipe-num c-amber">02 · Transformacja</div>
-        <div class="pipe-name">Power Query M</div>
-      </div>
-      <div class="pipe-items">
-        <div class="pipe-item">
-          <span class="pipe-item-label">10 zapytań</span>
-          qry_NBP_USD · qry_NBP_EUR
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">Merge · Inner Join</span>
-          qry_NBP_Waluty · qry_WIG20
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">FillDown · LOCF</span>
-          VIX · GPR · GPRC_POL
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">Master · 1 589 wierszy</span>
-          qry_MASTER · qry_Kalendarz
-        </div>
-      </div>
-      <div class="pipe-status status-done">✓ Gotowe</div>
-    </div>
+      <div class="pconn"><div class="pconn-track"><div class="pconn-packet" id="pk3"></div></div></div>
 
-    <!-- COL 3 -->
-    <div class="pipe-col" style="transition-delay:.2s">
-      <div class="pipe-header" style="border-color:#10b981">
-        <div class="pipe-num c-green">03 · Model danych</div>
-        <div class="pipe-name">Power Pivot · DAX</div>
+      <!-- NODE 5 — Power BI -->
+      <div class="pnode" id="pn4" style="border-top-color:#3b82f6; color:#3b82f6;">
+        <div class="pnode-num">05</div>
+        <div class="pnode-icon">▣</div>
+        <div class="pnode-name">Power BI</div>
+        <div class="pnode-tech">Dashboard<br>KPI · Scatter<br>Filtry · Slicery</div>
+        <div class="pnode-badge" style="border-color:#3b82f660;color:#3b82f6">Live viz</div>
       </div>
-      <div class="pipe-items">
-        <div class="pipe-item">
-          <span class="pipe-item-label">Relacja 1→*</span>
-          Kalendarz ↔ qry_MASTER
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">Miara DAX</span>
-          Avg VIX 30d
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">Miara DAX</span>
-          GPR Change % · USD Trend
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">Miara DAX</span>
-          Risk Label (1 / 0 / −1)
-        </div>
-      </div>
-      <div class="pipe-status status-done">✓ Gotowe</div>
-    </div>
 
-    <!-- COL 4 -->
-    <div class="pipe-col" style="transition-delay:.3s">
-      <div class="pipe-header" style="border-color:#8b5cf6">
-        <div class="pipe-num" style="color:#8b5cf6">04 · Analityka AI</div>
-        <div class="pipe-name">Python · VBA · Claude API</div>
-      </div>
-      <div class="pipe-items">
-        <div class="pipe-item">
-          <span class="pipe-item-label">xlwings · Python</span>
-          Korelacje · regresja
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">Claude API</span>
-          Komentarz_AI — interpretacja tekstowa
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">VBA · makro</span>
-          OdswierzDane()
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">VBA · makro</span>
-          GenerujKomentarzAI()
+    </div><!-- /pipeline -->
+
+    <!-- DETAILS ROW -->
+    <div class="pipe-details" id="pipe-details">
+      <div class="pipe-detail" id="pd0">
+        <div class="pd-label">Źródła danych</div>
+        <div class="pd-items">
+          <div class="pd-item">USD/PLN · EUR/PLN — NBP API</div>
+          <div class="pd-item">VIX — FRED API (auto)</div>
+          <div class="pd-item">WIG20, JSW, KGHM, PKN — Stooq</div>
+          <div class="pd-item">GPR, GPRC_POL — Caldara & Iacoviello</div>
         </div>
       </div>
-      <div class="pipe-status status-next">→ Następna faza</div>
-    </div>
-
-    <!-- COL 5 -->
-    <div class="pipe-col" style="transition-delay:.4s">
-      <div class="pipe-header" style="border-color:#ef4444">
-        <div class="pipe-num c-red">05 · Prezentacja</div>
-        <div class="pipe-name">Excel · Power BI</div>
-      </div>
-      <div class="pipe-items">
-        <div class="pipe-item">
-          <span class="pipe-item-label">Excel 365 · Arkusz 4</span>
-          Dynamiczny wykres (PRZESUNIĘCIE + #)
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">Power BI · Strona 1</span>
-          Dashboard przegląd — KPI · trend
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">Power BI · Strona 2</span>
-          Scatter · macierz korelacji
-        </div>
-        <div class="pipe-item">
-          <span class="pipe-item-label">Figma → Power BI</span>
-          Wireframe → implementacja
+      <div class="pipe-detail" id="pd1">
+        <div class="pd-label">Transformacje</div>
+        <div class="pd-items">
+          <div class="pd-item">FillDown — VIX, GPR (luki kalend.)</div>
+          <div class="pd-item">LOCF — standard szeregów czasowych</div>
+          <div class="pd-item">separator "." → "," przed typowaniem</div>
+          <div class="pd-item">NestedJoin zamiast Join (bez duplikatów)</div>
         </div>
       </div>
-      <div class="pipe-status status-plan">◌ Planowane</div>
-    </div>
-
-  </div>
-
-  <div class="context-banner">
-    <strong>Kontekst projektu:</strong> Projekt UEK to kompletne, samodzielne dzieło akademickie — zaprojektowane i zrealizowane jako autonomiczny projekt badawczy. Równolegle, w oparciu o zdobyte doświadczenia, powstaje osobny, bardziej rozbudowany projekt oparty na pełnej automatyzacji — <strong>Geo Pulse</strong>. Oba projekty działają niezależnie i żaden nie jest warunkiem drugiego; stanowią naturalną parę: UEK jako akademicki proof of concept idei, Geo Pulse jako jej produkcyjna kontynuacja. Podobną funkcję w środowisku finansowym pełni Terminal Bloomberg — wyspecjalizowana platforma analityki geopolitycznej i rynkowej w czasie rzeczywistym.
-  </div>
-</section>
-
-<!-- ════════════════════════════════ DANE ═══════════════════════════════ -->
-<section id="dane">
-  <div class="section-header">
-    <div class="section-num">// 03 · Źródła i argumentacja</div>
-    <h2>Dane · Ograniczenia · POC</h2>
-  </div>
-
-  <div class="sources-grid">
-
-    <div class="source-card" style="border-color:#3b82f6">
-      <div class="source-top">
-        <div class="source-name">NBP API</div>
-        <div class="source-mode c-blue" style="border-color:#1e3a5f">semi-auto · CSV</div>
+      <div class="pipe-detail" id="pd2">
+        <div class="pd-label">Miary DAX</div>
+        <div class="pd-items">
+          <div class="pd-item">Avg VIX 30d</div>
+          <div class="pd-item">GPR Prev Month · GPR Change %</div>
+          <div class="pd-item">USD Trend</div>
+          <div class="pd-item">Risk Label (−1 / 0 / +1)</div>
+        </div>
       </div>
-      <div class="source-what">EUR/PLN · USD/PLN · zakres 2020–2026 · 1 589 rekordów</div>
-      <div class="source-arg" style="border-color:#1e3a5f">
-        API NBP ma limit 367 dni na zapytanie. Dane historyczne pobierane
-        skryptem Python rok po roku i scalane w jeden plik CSV.
-        Pipeline transformacji działa automatycznie.
+      <div class="pipe-detail" id="pd3">
+        <div class="pd-label">AI Commentary</div>
+        <div class="pd-items">
+          <div class="pd-item">silesiapulse_ai.py via xlwings</div>
+          <div class="pd-item">model: claude-sonnet-4-6</div>
+          <div class="pd-item">komentarz dzienny + AI_Summary</div>
+          <div class="pd-item">VBA trigger z Panelu sterowania</div>
+        </div>
       </div>
-    </div>
-
-    <div class="source-card" style="border-color:#f59e0b">
-      <div class="source-top">
-        <div class="source-name">Stooq.pl</div>
-        <div class="source-mode c-amber" style="border-color:#92610a">semi-auto · CSV</div>
-      </div>
-      <div class="source-what">WIG20 · JSW · KGHM · PKN Orlen · pełna historia notowań</div>
-      <div class="source-arg" style="border-color:#92610a">
-        Stooq stosuje zabezpieczenia anti-bot blokujące Power Query.
-        Świadome ograniczenie POC — w rozbudowanej wersji projektu
-        rozwiązane przez dedykowany kolektor Python (yfinance / pandas-datareader).
-      </div>
-    </div>
-
-    <div class="source-card" style="border-color:#10b981">
-      <div class="source-top">
-        <div class="source-name">FRED API</div>
-        <div class="source-mode c-green" style="border-color:#064e3b">automatyczny · Web</div>
-      </div>
-      <div class="source-what">VIX — CBOE Volatility Index · dane dzienne</div>
-      <div class="source-arg" style="border-color:#064e3b">
-        Luki kalendarzowe (GPW vs NYSE) uzupełniane metodą LOCF
-        (Last Observation Carried Forward / FillDown) —
-        standard w analizie szeregów czasowych finansowych.
-      </div>
-    </div>
-
-    <div class="source-card" style="border-color:#8b5cf6">
-      <div class="source-top">
-        <div class="source-name">GPR Index</div>
-        <div class="source-mode" style="color:#8b5cf6;border-color:#4c1d95;background:rgba(139,92,246,.07)">semi-auto · XLS</div>
-      </div>
-      <div class="source-what">GPR globalny · GPRC_POL · dane miesięczne od 1985</div>
-      <div class="source-arg" style="border-color:#4c1d95">
-        Caldara &amp; Iacoviello (2022) · <em>American Economic Review</em>, 112(4).
-        Wartości miesięczne propagowane na dni robocze metodą forward fill.
-        Brak danych sty–mar 2020 = granica źródłowa, nie błąd pipeline.
+      <div class="pipe-detail" id="pd4">
+        <div class="pd-label">Dashboard</div>
+        <div class="pd-items">
+          <div class="pd-item">Strona 1: 9 KPI (wzorzec F)</div>
+          <div class="pd-item">Strona 2: scatter + korelacje</div>
+          <div class="pd-item">Filtry: COVID / Ukraina / Epic Fury</div>
+          <div class="pd-item">Komentarz AI w widoku live</div>
+        </div>
       </div>
     </div>
 
   </div>
-</section>
+</div><!-- /slide-1 -->
 
-<!-- ════════════════════════════════ IMPULS ══════════════════════════════ -->
-<section id="impuls">
-  <div class="section-header">
-    <div class="section-num">// 04 · Geneza projektu</div>
-    <h2>Impuls · Bliski Wschód · 7 października 2023</h2>
-  </div>
 
-  <div class="impuls-grid">
+<!-- ─── SLIDE 3 — WNIOSKI ─── -->
+<div class="slide" id="slide-2">
+  <div class="s3-inner">
 
-    <!-- TIMELINE -->
-    <div class="timeline">
+    <div class="s3-left">
+      <div class="s3-num">// 03 · Wnioski</div>
+      <h2 class="s3-title">
+        <em>Mierzalne.</em> Interpretowalne.<br>
+        Gotowe.
+      </h2>
 
-      <div class="tl-item">
-        <div class="tl-date-col">
-          <div class="tl-date">7 paź<br>2023</div>
-          <div class="tl-vline"></div>
+      <div class="conclusions" id="conclusions">
+        <div class="concl" style="border-left-color:#ef4444">
+          <div class="concl-num" style="color:#ef4444">1.</div>
+          <div class="concl-body">
+            <div class="concl-label" style="color:#ef4444">Opisowy</div>
+            <div class="concl-text">Pipeline rejestruje <strong>~1 600 rekordów</strong> z 4 źródeł w jednej tabeli qry_MASTER — pełna historia od kwietnia 2020.</div>
+          </div>
         </div>
-        <div class="tl-content">
-          <div class="tl-title"><span class="tl-dot" style="background:#ef4444"></span>„Czarna Sobota"</div>
-          <div class="tl-desc">Hamas przeprowadza bezprecedensowy atak na południe Izraela — ok. 1 200 ofiar, 251 zakładników, ponad 13 tys. wystrzelonych rakiet. Największy kryzys militarny w regionie od wojny Jom Kippur (1973). GPR Index reaguje gwałtownym skokiem.</div>
+        <div class="concl" style="border-left-color:#f59e0b">
+          <div class="concl-num" style="color:#f59e0b">2.</div>
+          <div class="concl-body">
+            <div class="concl-label" style="color:#f59e0b">Wyjaśniający</div>
+            <div class="concl-text">GPR Index wykazuje <strong>korelację z VIX i USD/PLN</strong> — wzrost GPR poprzedza osłabienie złotego i wzrost zmienności rynkowej.</div>
+          </div>
+        </div>
+        <div class="concl" style="border-left-color:#a78bfa">
+          <div class="concl-num" style="color:#a78bfa">3.</div>
+          <div class="concl-body">
+            <div class="concl-label" style="color:#a78bfa">Prognostyczny</div>
+            <div class="concl-text">Risk Label i GPR Change % działają jako <strong>wskaźniki wyprzedzające</strong> — sygnalizują wzrost ryzyka przed wstrząsem rynkowym.</div>
+          </div>
+        </div>
+        <div class="concl" style="border-left-color:#10b981">
+          <div class="concl-num" style="color:#10b981">4.</div>
+          <div class="concl-body">
+            <div class="concl-label" style="color:#10b981">Preskryptywny</div>
+            <div class="concl-text">Komentarz AI generuje <strong>konkretne rekomendacje</strong> dla inwestora regionalnego — „wzmożona obserwacja KGHM i PKN w najbliższych sesjach."</div>
+          </div>
         </div>
       </div>
-
-      <div class="tl-item">
-        <div class="tl-date-col">
-          <div class="tl-date">paź–gru<br>2023</div>
-          <div class="tl-vline"></div>
-        </div>
-        <div class="tl-content">
-          <div class="tl-title"><span class="tl-dot" style="background:#f59e0b"></span>Regionalizacja konfliktu</div>
-          <div class="tl-desc">Do konfliktu włącza się Hezbollah (Liban), ruch Huti (Jemen) atakuje statki na Morzu Czerwonym, Iran angażuje Oś Oporu. Presja na ceny ropy, zakłócenia łańcuchów dostaw. VIX oscyluje powyżej 20.</div>
-        </div>
-      </div>
-
-      <div class="tl-item">
-        <div class="tl-date-col">
-          <div class="tl-date">2024</div>
-          <div class="tl-vline"></div>
-        </div>
-        <div class="tl-content">
-          <div class="tl-title"><span class="tl-dot" style="background:#f59e0b"></span>Eskalacja i nieudana dyplomacja</div>
-          <div class="tl-desc">Izrael wkracza do Libanu (paź 2024), uderza w Syrię, ginie Nasrallah. MTS nakazuje wstrzymanie ofensywy w Rafah — Izrael ignoruje. Kolejne rundy negocjacji USA–Katar–Egipt załamują się. GPRC_POL odchyla się od globalnego GPR.</div>
-        </div>
-      </div>
-
-      <div class="tl-item">
-        <div class="tl-date-col">
-          <div class="tl-date">sty 2025</div>
-          <div class="tl-vline"></div>
-        </div>
-        <div class="tl-content">
-          <div class="tl-title"><span class="tl-dot" style="background:#3b82f6"></span>Zawieszenie broni — kruche i warunkowe</div>
-          <div class="tl-desc">15 stycznia 2025 porozumienie pośredniczone przez Katar, Egipt i USA. 48 zakładników wciąż przetrzymywanych. Konflikt strukturalnie nierozstrzygnięty — tleje dalej.</div>
-        </div>
-      </div>
-
-      <div class="tl-item">
-        <div class="tl-date-col">
-          <div class="tl-date">lut 2026</div>
-          <div class="tl-vline"></div>
-        </div>
-        <div class="tl-content">
-          <div class="tl-title"><span class="tl-dot" style="background:#f59e0b"></span>Maksymalna presja — przed wybuchem</div>
-          <div class="tl-desc">USA gromadzą siły w regionie. Iran tłumi protesty. Negocjacje nuklearne w Omanie bez rezultatu. ONZ przywraca sankcje mechanizmem „snapback". GPR osiąga poziomy ekstremalne.</div>
-        </div>
-      </div>
-
-      <div class="tl-item">
-        <div class="tl-date-col">
-          <div class="tl-date" style="color:#ef4444;font-weight:700">28 lut<br>2026</div>
-          <div class="tl-vline" style="background:#ef4444"></div>
-        </div>
-        <div class="tl-content">
-          <div class="tl-title"><span class="tl-dot" style="background:#ef4444"></span>Operacja „Epic Fury" / „Ryczący Lew"</div>
-          <div class="tl-desc">USA i Izrael atakują Iran. Ginie Najwyższy Przywódca Chamenei. Iran odpowiada rakietami na Izrael i bazy USA w Bahrajnie, Katarze, Kuwejcie, Jordanii — oraz zamyka Cieśninę Ormuz. Ropa +18% w tydzień. VIX 34.7. WIG20 −8.4%. <span style="color:var(--amber)">→ Szczegóły w zakładce Gazeta</span></div>
-        </div>
-      </div>
-
-      <div class="tl-item">
-        <div class="tl-date-col">
-          <div class="tl-date">8 kwi<br>2026</div>
-          <div class="tl-vline"></div>
-        </div>
-        <div class="tl-content">
-          <div class="tl-title"><span class="tl-dot" style="background:#64748b"></span>Tymczasowy rozejm — walki trwają</div>
-          <div class="tl-desc">Rozejm USA–Iran od 8 kwietnia 2026. Liban i Irak nadal niestabilne. Negocjacje pokojowe Trumpa w toku. GPR i GPRC_POL pozostają chronicznie podwyższone — ryzyko kolejnej eskalacji strukturalne.</div>
-        </div>
-      </div>
-
     </div>
 
-    <!-- ANALIZA PRAWA -->
-    <div class="impuls-right">
-
-      <div class="analysis-card" style="border-color:#ef4444">
-        <div class="analysis-card-title c-red">Dlaczego ten konflikt stał się impulsem do projektu?</div>
-        <div class="analysis-card-body">
-          Wydarzenie 7 października 2023 było <strong>pierwszym w XXI w. zdarzeniem geopolitycznym</strong>,
-          które w ciągu 48 godzin wywołało jednocześnie: skok GPR Index, wzrost VIX powyżej 25,
-          umocnienie dolara i przecenę spółek energetycznych i surowcowych w regionie CEE.
-          Dla Śląska — regionu opartego na przemyśle ciężkim wrażliwym na ceny surowców —
-          był to wymierny, policzalny impuls. To pytanie stało się tytułem pracy:
-          <em>„jak globalne wydarzenia geopolityczne przekładają się na wskaźniki finansowe Śląska?"</em>
+    <div class="s3-right">
+      <div class="levels-title">// 4 poziomy analizy wg dr hab. Krzysztofa Kani, prof. UE</div>
+      <div class="levels" id="levels">
+        <div class="level" style="border-left:3px solid #ef4444;">
+          <div class="level-num" style="color:#ef4444">01</div>
+          <div class="level-name">Opisowy</div>
+          <div class="level-example">Co się stało?<br>qry_MASTER · dane historyczne</div>
+        </div>
+        <div class="level" style="border-left:3px solid #f59e0b;">
+          <div class="level-num" style="color:#f59e0b">02</div>
+          <div class="level-name">Wyjaśniający</div>
+          <div class="level-example">Dlaczego?<br>DAX · korelacje · GPR→VIX</div>
+        </div>
+        <div class="level" style="border-left:3px solid #a78bfa;">
+          <div class="level-num" style="color:#a78bfa">03</div>
+          <div class="level-name">Prognostyczny</div>
+          <div class="level-example">Co będzie?<br>Risk Label · GPR Change %</div>
+        </div>
+        <div class="level" style="border-left:3px solid #10b981;">
+          <div class="level-num" style="color:#10b981">04</div>
+          <div class="level-name">Preskryptywny</div>
+          <div class="level-example">Co zrobić?<br>Claude API · rekomendacje</div>
         </div>
       </div>
 
-      <div class="analysis-card" style="border-color:#f59e0b">
-        <div class="analysis-card-title c-amber">Dolar jako „bezpieczna przystań" — mit czy realia 2025–2026?</div>
-        <div class="analysis-card-body">
-          Tradycyjny schemat mówił: kryzys geopolityczny → ucieczka w dolara → USD/PLN rośnie.
-          Dane 2025–2026 <strong>podważają ten aksjomat</strong>. DXY spadł o 9,4% w 2025 r.
-          Goldman Sachs prognozuje USD/PLN na poziomie 3,44 zł w 2026 r.
-          Morgan Stanley celuje w EUR/USD 1,25.<br><br>
-          <strong>Przyczyny strukturalne:</strong> dług publiczny USA przekroczył 36 bln USD (100% PKB),
-          koszty obsługi długu wyprzedziły wydatki na obronę, 9 bln USD obligacji zapada w 2026 r.
-          Polityka Trumpa, cięcia Fed i dedolaryzacja BRICS zmieniają paradygmat.<br><br>
-          <strong>Wniosek analityczny dla projektu:</strong> relacja GPR → USD/PLN nie jest
-          jednostronna ani stała — wymaga empirycznej weryfikacji w danych 2020–2026,
-          co stanowi jeden z kluczowych wyników pracy.
+      <div class="kpi-row" id="kpis">
+        <div class="kpi" style="border-top-color:#ef4444;">
+          <div class="kpi-val" style="color:#ef4444;">4</div>
+          <div class="kpi-label">Źródła<br>danych</div>
+        </div>
+        <div class="kpi" style="border-top-color:#f59e0b;">
+          <div class="kpi-val" style="color:#f59e0b;">~1 600</div>
+          <div class="kpi-label">Rekordów<br>w MASTER</div>
+        </div>
+        <div class="kpi" style="border-top-color:#10b981;">
+          <div class="kpi-val" style="color:#10b981;">5</div>
+          <div class="kpi-label">Miar<br>DAX</div>
         </div>
       </div>
 
-      <div class="analysis-card" style="border-color:#3b82f6">
-        <div class="analysis-card-title c-blue">Znaczenie projektu — kto może z niego skorzystać?</div>
-        <div class="analysis-card-body">
-          <strong>Inwestorzy regionalni</strong> — wczesne sygnały ostrzegawcze przed wzrostem
-          ryzyka wpływającego na portfele z ekspozycją na JSW, KGHM, PKN.<br><br>
-          <strong>Analitycy sektora publicznego</strong> — narzędzie monitorowania wpływu
-          ryzyka geopolitycznego na gospodarkę regionalną Śląska.<br><br>
-          <strong>Kierunek rozwoju</strong> — projekt UEK jest akademickim proof of concept.
-          Narzędzie tej klasy — działające w czasie rzeczywistym, z pełną automatyzacją
-          i interfejsem analitycznym — pełni rolę zbliżoną do wyspecjalizowanych
-          terminali finansowych, takich jak <em>Bloomberg Terminal</em>.
+      <div class="gp-badge" id="gp-badge">
+        <div class="gp-tag">→ Kierunek rozwoju · Geo Pulse</div>
+        <div class="gp-text">
+          Projekt UEK buduje i uruchamia pipeline, który mierzy korelacje w czasie rzeczywistym —
+          <strong>dane mówią same za siebie.</strong> Geo Pulse to produkcyjna implementacja tej samej metodologii — skalowalna globalnie, z automatycznym kolektorem danych i AI commentary w czasie rzeczywistym.
         </div>
       </div>
-
     </div>
-  </div>
-</section>
 
-<!-- CROSS-NAV -->
-<div style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:1.2rem 2.5rem; display:flex; align-items:center; justify-content:space-between;">
-  <div style="font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--muted); letter-spacing:.08em; text-transform:uppercase;">
-    Dokumentacja uzupełniająca
   </div>
-  <a href="gazeta.html" target="_blank"
-     style="display:inline-flex; align-items:center; gap:.7rem;
-            font-family:'Syne',sans-serif; font-size:.85rem; font-weight:700;
-            color:var(--amber); border:1px solid var(--amber-dim);
-            padding:.6rem 1.4rem; text-decoration:none;
-            transition:background .2s;"
-     onmouseover="this.style.background='rgba(245,158,11,.1)'"
-     onmouseout="this.style.background='transparent'">
-    <span>📰</span>
-    Geo Monitor · Raport: Bliski Wschód 2023–2026
-    <span style="font-size:.7rem; opacity:.7">→ otwórz gazetę</span>
-  </a>
-</div>
+</div><!-- /slide-2 -->
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-left">
-    Robert Baraniecki · UEK Katowice · Projekt końcowy 2026<br>
-    Promotor: dr hab. Krzysztof Kania, prof. UE
-  </div>
-  <div class="footer-dates">
-    <div class="footer-date">
-      <span class="footer-date-label">Konsultacje</span>
-      <span class="footer-date-val date-consult">30.05.2026</span>
-    </div>
-    <div class="footer-date">
-      <span class="footer-date-label">Obrona</span>
-      <span class="footer-date-val date-defense">11.07.2026</span>
-    </div>
-  </div>
-</footer>
+</div><!-- /slides -->
 
 <script>
-  // Scroll nav dots
-  const sections = ['hero','lancuch','pipeline','dane','impuls'];
-  const dots = document.querySelectorAll('.scroll-dot');
+// ── SLIDE ENGINE ──
+let current = 0;
+const total = 3;
+const slides = document.querySelectorAll('.slide');
+const dots   = document.querySelectorAll('.nav-dot');
+const curEl  = document.getElementById('cur');
 
-  function scrollTo(id) {
-    document.querySelector(id).scrollIntoView({ behavior: 'smooth' });
-  }
+function goTo(n) {
+  if (n === current) return;
+  slides[current].classList.add('exit-up');
+  dots[current].classList.remove('active');
+  setTimeout(() => {
+    slides[current].classList.remove('active', 'exit-up');
+    current = n;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    curEl.textContent = String(n+1).padStart(2,'0');
+    onSlideEnter(n);
+  }, 280);
+}
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        const idx = sections.indexOf(e.target.id);
-        dots.forEach((d,i) => d.classList.toggle('active', i === idx));
-      }
-    });
-  }, { threshold: 0.4 });
+function next() { if (current < total-1) goTo(current+1); }
+function prev() { if (current > 0) goTo(current-1); }
 
-  sections.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) observer.observe(el);
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next();
+  if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  prev();
+});
+
+let startY = 0;
+document.addEventListener('touchstart', e => startY = e.touches[0].clientY);
+document.addEventListener('touchend',   e => {
+  const dy = startY - e.changedTouches[0].clientY;
+  if (Math.abs(dy) > 40) dy > 0 ? next() : prev();
+});
+
+document.addEventListener('wheel', e => {
+  if (Math.abs(e.deltaY) < 20) return;
+  e.deltaY > 0 ? next() : prev();
+}, { passive: true });
+
+// ── SLIDE ENTER HOOKS ──
+function onSlideEnter(n) {
+  if (n === 0) revealChain();
+  if (n === 1) runPipelineAnimation();
+  if (n === 2) revealSlide3();
+}
+
+// ── SLIDE 1 — chain reveal ──
+function revealChain() {
+  document.querySelectorAll('.chain-item').forEach((el, i) => {
+    setTimeout(() => el.classList.add('reveal'), 100 + i*180);
+  });
+}
+
+// ── SLIDE 2 — PIPELINE ANIMATION ──
+let pipelineRan = false;
+function runPipelineAnimation() {
+  if (pipelineRan) return;
+  pipelineRan = true;
+
+  const nodes   = [0,1,2,3,4].map(i => document.getElementById('pn'+i));
+  const packets = [0,1,2,3].map(i => document.getElementById('pk'+i));
+  const details = [0,1,2,3,4].map(i => document.getElementById('pd'+i));
+
+  // 1. reveal all nodes staggered
+  nodes.forEach((n,i) => {
+    setTimeout(() => n.classList.add('reveal'), i*160);
   });
 
-  const chainSteps = document.querySelectorAll('.chain-step');
-  const pipeCols   = document.querySelectorAll('.pipe-col');
-  const sourceCards = document.querySelectorAll('.source-card');
-  const tlItems    = document.querySelectorAll('.tl-item');
-  const analysisCards = document.querySelectorAll('.analysis-card');
+  // 2. reveal detail cells staggered
+  details.forEach((d,i) => {
+    setTimeout(() => d.classList.add('reveal'), 200 + i*120);
+  });
 
-  const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) e.target.classList.add('visible');
-    });
-  }, { threshold: 0.15 });
+  // 3. activate nodes sequentially with packet flow
+  function activateStep(step) {
+    if (step > 4) {
+      // loop: restart packet pulses continuously
+      packets.forEach(p => p.classList.add('flowing'));
+      return;
+    }
+    // highlight node
+    nodes.forEach(n => n.classList.remove('active-node'));
+    details.forEach(d => d.classList.remove('active-detail'));
+    nodes[step].classList.add('active-node');
+    details[step].classList.add('active-detail');
 
-  [...chainSteps, ...pipeCols, ...sourceCards, ...tlItems, ...analysisCards]
-    .forEach((el, i) => {
-      el.style.transitionDelay = (i * 0.07) + 's';
-      revealObserver.observe(el);
-    });
+    // animate packet out of this node
+    if (step < 4) {
+      packets[step].classList.add('flowing');
+      setTimeout(() => {
+        packets[step].classList.remove('flowing');
+        activateStep(step+1);
+      }, 900);
+    } else {
+      // last node — start continuous loop
+      setTimeout(() => {
+        nodes.forEach(n => n.classList.remove('active-node'));
+        details.forEach(d => d.classList.remove('active-detail'));
+        packets.forEach(p => p.classList.add('flowing'));
+      }, 800);
+    }
+  }
+
+  setTimeout(() => activateStep(0), 900);
+}
+
+// ── SLIDE 3 — reveal ──
+let s3Ran = false;
+function revealSlide3() {
+  if (s3Ran) return;
+  s3Ran = true;
+  document.querySelectorAll('.concl').forEach((el,i) => {
+    setTimeout(() => el.classList.add('reveal'), 100 + i*150);
+  });
+  document.querySelectorAll('.level').forEach((el,i) => {
+    setTimeout(() => el.classList.add('reveal'), 150 + i*120);
+  });
+  document.querySelectorAll('.kpi').forEach((el,i) => {
+    setTimeout(() => el.classList.add('reveal'), 500 + i*100);
+  });
+  setTimeout(() => document.getElementById('gp-badge').classList.add('reveal'), 900);
+}
+
+// ── INIT ──
+onSlideEnter(0);
 </script>
 </body>
 </html>
-
-<!-- ════════════════════════════════ UWAGI ═══════════════════════════════ -->
-<section id="uwagi" style="min-height:auto; padding:4rem 2.5rem 3rem; background:var(--bg);">
-
-  <div style="max-width:860px; margin:0 auto;">
-
-    <div class="section-header" style="margin-bottom:2rem;">
-      <div class="section-num">// 05 · Dialog</div>
-      <h2>Uwagi i odpowiedzi</h2>
-    </div>
-
-    <!-- PROMOTOR PANEL -->
-    <div style="
-      border:1px solid var(--border);
-      border-top:3px solid #8b5cf6;
-      padding:1.5rem;
-      margin-bottom:1.5rem;
-      background:var(--surface);
-    ">
-      <div style="
-        display:flex; align-items:center; justify-content:space-between;
-        margin-bottom:1rem;
-      ">
-        <div style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.68rem; letter-spacing:.1em;
-          text-transform:uppercase; color:#8b5cf6;
-        ">// Uwagi Promotora · dr hab. K. Kania</div>
-        <div id="prom-timestamp" style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.6rem; color:var(--muted);
-        "></div>
-      </div>
-
-      <textarea id="prom-textarea" placeholder="Proszę wpisać tutaj uwagi, sugestie lub pytania do projektu…" style="
-        width:100%; min-height:130px;
-        background:rgba(0,0,0,.3);
-        border:1px solid var(--border);
-        border-radius:2px;
-        color:var(--text);
-        font-family:'IBM Plex Mono',monospace;
-        font-size:.8rem; line-height:1.7;
-        padding:.8rem 1rem;
-        resize:vertical;
-        outline:none;
-        transition:border-color .2s;
-      " onfocus="this.style.borderColor='#8b5cf6'"
-         onblur="this.style.borderColor='var(--border)'"
-      ></textarea>
-
-      <div style="display:flex; justify-content:flex-end; margin-top:.8rem;">
-        <button onclick="saveNote('prom')" style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.68rem; letter-spacing:.08em;
-          text-transform:uppercase;
-          background:#8b5cf6; color:white;
-          border:none; padding:.5rem 1.2rem;
-          cursor:pointer; border-radius:2px;
-          transition:opacity .2s;
-        " onmouseover="this.style.opacity='.8'"
-           onmouseout="this.style.opacity='1'">
-          Zapisz uwagi
-        </button>
-      </div>
-    </div>
-
-    <!-- STUDENT PANEL -->
-    <div style="
-      border:1px solid var(--border);
-      border-top:3px solid var(--amber);
-      padding:1.5rem;
-      background:var(--surface);
-    ">
-      <div style="
-        display:flex; align-items:center; justify-content:space-between;
-        margin-bottom:1rem;
-      ">
-        <div style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.68rem; letter-spacing:.1em;
-          text-transform:uppercase; color:var(--amber);
-        ">// Odpowiedź Studenta · R. Baraniecki</div>
-        <div id="stud-timestamp" style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.6rem; color:var(--muted);
-        "></div>
-      </div>
-
-      <textarea id="stud-textarea" placeholder="Odpowiedź na uwagi Promotora — opis wprowadzonych poprawek lub pytania wyjaśniające…" style="
-        width:100%; min-height:130px;
-        background:rgba(0,0,0,.3);
-        border:1px solid var(--border);
-        border-radius:2px;
-        color:var(--text);
-        font-family:'IBM Plex Mono',monospace;
-        font-size:.8rem; line-height:1.7;
-        padding:.8rem 1rem;
-        resize:vertical;
-        outline:none;
-        transition:border-color .2s;
-      " onfocus="this.style.borderColor='var(--amber)'"
-         onblur="this.style.borderColor='var(--border)'"
-      ></textarea>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:.8rem;">
-        <div id="save-confirm" style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.6rem; color:var(--green);
-          opacity:0; transition:opacity .4s;
-        ">✓ zapisano</div>
-        <button onclick="saveNote('stud')" style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.68rem; letter-spacing:.08em;
-          text-transform:uppercase;
-          background:var(--amber); color:#0a0e17;
-          border:none; padding:.5rem 1.2rem;
-          cursor:pointer; border-radius:2px;
-          transition:opacity .2s;
-        " onmouseover="this.style.opacity='.8'"
-           onmouseout="this.style.opacity='1'">
-          Zapisz odpowiedź
-        </button>
-      </div>
-    </div>
-
-    <!-- HISTORY LOG -->
-    <div id="history-log" style="margin-top:1.5rem; display:none;">
-      <div style="
-        font-family:'IBM Plex Mono',monospace;
-        font-size:.62rem; letter-spacing:.1em;
-        text-transform:uppercase; color:var(--muted);
-        margin-bottom:.8rem; padding-bottom:.4rem;
-        border-bottom:1px solid var(--border);
-      ">// Historia wpisów</div>
-      <div id="history-entries"></div>
-    </div>
-
-    <!-- EXPORT / IMPORT BAR -->
-    <div style="
-      margin-top:1.5rem;
-      border:1px solid var(--border);
-      padding:1rem 1.2rem;
-      background:var(--surface);
-      display:flex; flex-wrap:wrap;
-      align-items:center; gap:.8rem;
-      justify-content:space-between;
-    ">
-      <div style="
-        font-family:'IBM Plex Mono',monospace;
-        font-size:.62rem; letter-spacing:.1em;
-        text-transform:uppercase; color:var(--muted);
-      ">// Eksport · Import · JSON</div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:.6rem; align-items:center;">
-
-        <!-- EXPORT -->
-        <button onclick="exportJSON()" style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.65rem; letter-spacing:.07em;
-          text-transform:uppercase;
-          background:transparent; color:var(--green);
-          border:1px solid #064e3b; padding:.4rem 1rem;
-          cursor:pointer; border-radius:2px;
-          transition:background .2s;
-        " onmouseover="this.style.background='rgba(16,185,129,.08)'"
-           onmouseout="this.style.background='transparent'">
-          ↓ Pobierz plik JSON
-        </button>
-
-        <!-- IMPORT -->
-        <label style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.65rem; letter-spacing:.07em;
-          text-transform:uppercase;
-          background:transparent; color:var(--blue);
-          border:1px solid var(--blue-dim); padding:.4rem 1rem;
-          cursor:pointer; border-radius:2px;
-          transition:background .2s;
-          display:inline-block;
-        " onmouseover="this.style.background='rgba(59,130,246,.08)'"
-           onmouseout="this.style.background='transparent'">
-          ↑ Wgraj plik JSON
-          <input type="file" accept=".json" onchange="importJSON(event)"
-                 style="display:none;">
-        </label>
-
-        <!-- IMPORT CONFIRM -->
-        <span id="import-confirm" style="
-          font-family:'IBM Plex Mono',monospace;
-          font-size:.6rem; color:var(--green);
-          opacity:0; transition:opacity .4s;
-        ">✓ wgrano</span>
-
-      </div>
-    </div>
-
-    <!-- INFO NOTE -->
-    <div style="
-      margin-top:.8rem;
-      font-family:'IBM Plex Mono',monospace;
-      font-size:.6rem; color:var(--muted);
-      line-height:1.8;
-    ">
-      ⓘ Uwagi zapisywane lokalnie (localStorage). Aby przekazać je drugiej stronie:<br>
-      <span style="color:var(--text);">Promotor</span> — kliknij <em>Pobierz JSON</em> → wyślij plik mailem → Student klika <em>Wgraj JSON</em>.<br>
-      <span style="color:var(--text);">Student</span> — po dodaniu odpowiedzi kliknij <em>Pobierz JSON</em> → wyślij plik mailem → Promotor klika <em>Wgraj JSON</em>.
-    </div>
-
-  </div>
-</section>
-
-<script>
-  // ── NOTES SYSTEM ──
-  const KEYS = { prom: 'uek_prom_note', stud: 'uek_stud_note' };
-  const HIST  = 'uek_notes_history';
-
-  function fmt(ts) {
-    return new Date(ts).toLocaleString('pl-PL', {
-      day:'2-digit', month:'2-digit', year:'numeric',
-      hour:'2-digit', minute:'2-digit'
-    });
-  }
-
-  function loadNotes() {
-    ['prom','stud'].forEach(who => {
-      const saved = localStorage.getItem(KEYS[who]);
-      if (saved) {
-        const obj = JSON.parse(saved);
-        document.getElementById(who+'-textarea').value = obj.text || '';
-        const tsEl = document.getElementById(who+'-timestamp');
-        if (tsEl && obj.ts) tsEl.textContent = 'ostatnia zmiana: ' + fmt(obj.ts);
-      }
-    });
-    renderHistory();
-  }
-
-  function saveNote(who) {
-    const text = document.getElementById(who+'-textarea').value.trim();
-    if (!text) return;
-    const ts = Date.now();
-    localStorage.setItem(KEYS[who], JSON.stringify({ text, ts }));
-
-    const tsEl = document.getElementById(who+'-timestamp');
-    if (tsEl) tsEl.textContent = 'ostatnia zmiana: ' + fmt(ts);
-
-    const hist = JSON.parse(localStorage.getItem(HIST) || '[]');
-    const label = who === 'prom' ? 'Promotor' : 'Student';
-    hist.push({ who: label, text: text.substring(0,120)+(text.length>120?'…':''), ts });
-    localStorage.setItem(HIST, JSON.stringify(hist.slice(-20)));
-
-    const confirm = document.getElementById('save-confirm');
-    if (confirm) { confirm.style.opacity='1'; setTimeout(()=>confirm.style.opacity='0', 2000); }
-
-    renderHistory();
-  }
-
-  // ── EXPORT ──
-  function exportJSON() {
-    const payload = {
-      meta: {
-        projekt: 'UEK Katowice 2026 · R. Baraniecki',
-        eksport: new Date().toISOString()
-      },
-      promotor: JSON.parse(localStorage.getItem(KEYS.prom) || 'null'),
-      student:  JSON.parse(localStorage.getItem(KEYS.stud)  || 'null'),
-      historia: JSON.parse(localStorage.getItem(HIST)       || '[]')
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    const date = new Date().toISOString().slice(0,10);
-    a.href     = url;
-    a.download = `UEK_uwagi_${date}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  // ── IMPORT ──
-  function importJSON(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const data = JSON.parse(e.target.result);
-
-        if (data.promotor) {
-          localStorage.setItem(KEYS.prom, JSON.stringify(data.promotor));
-        }
-        if (data.student) {
-          localStorage.setItem(KEYS.stud, JSON.stringify(data.student));
-        }
-        if (data.historia && data.historia.length) {
-          // merge histories — deduplicate by ts
-          const existing = JSON.parse(localStorage.getItem(HIST) || '[]');
-          const merged   = [...existing, ...data.historia];
-          const unique   = Array.from(new Map(merged.map(h => [h.ts, h])).values());
-          unique.sort((a,b) => a.ts - b.ts);
-          localStorage.setItem(HIST, JSON.stringify(unique.slice(-20)));
-        }
-
-        loadNotes(); // refresh UI
-
-        const confirm = document.getElementById('import-confirm');
-        if (confirm) { confirm.style.opacity='1'; setTimeout(()=>confirm.style.opacity='0', 2500); }
-
-      } catch(err) {
-        alert('Błąd odczytu pliku JSON. Upewnij się, że plik pochodzi z tej prezentacji.');
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = ''; // reset input so same file can be re-imported
-  }
-
-  // ── HISTORY ──
-  function renderHistory() {
-    const hist    = JSON.parse(localStorage.getItem(HIST) || '[]');
-    const log     = document.getElementById('history-log');
-    const entries = document.getElementById('history-entries');
-    if (!hist.length) { log.style.display='none'; return; }
-    log.style.display='block';
-    entries.innerHTML = hist.slice().reverse().map(h => `
-      <div style="
-        display:grid; grid-template-columns:120px 1fr;
-        gap:.8rem; padding:.5rem 0;
-        border-bottom:1px dotted var(--border);
-        font-size:.72rem;
-      ">
-        <div style="font-family:'IBM Plex Mono',monospace; color:var(--muted); font-size:.6rem; padding-top:.1rem;">
-          ${fmt(h.ts)}<br>
-          <span style="color:${h.who==='Promotor'?'#8b5cf6':'var(--amber)'};">${h.who}</span>
-        </div>
-        <div style="color:var(--text); line-height:1.6;">${h.text}</div>
-      </div>
-    `).join('');
-  }
-
-  window.addEventListener('load', loadNotes);
-</script>
-</body>
-</html>
-
-<!-- deploy 1779394802 -->
-< ! - -   d e p l o y   2 0 2 6 0 5 2 1 2 2 2 3 2 4   - - >  
- 

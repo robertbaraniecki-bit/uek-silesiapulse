@@ -299,6 +299,28 @@
     background: rgba(255,255,255,0.08);
   }
 
+  /* ── BACK LINK ── */
+  .eco-back {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    margin-top: 6px;
+    display: inline-block;
+  }
+  .eco-back:hover {
+    color: rgba(123,97,255,0.9);
+    border-color: rgba(123,97,255,0.4);
+    background: rgba(123,97,255,0.07);
+  }
+
   /* ── LEGEND ── */
   .legend {
     margin-top: 32px;
@@ -392,11 +414,20 @@
     <div class="leg-item"><div class="leg-dot" style="background:#7B61FF"></div>AI &amp; Kreacja</div>
     <div class="leg-item"><div class="leg-dot" style="background:#4A90E2"></div>Produktywność</div>
     <div class="leg-item"><div class="leg-dot" style="background:#FF7B35"></div>Produkcja wideo</div>
+    <a href="ecosystem2.html" style="margin-left:auto; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.3); text-decoration:none; border:1px solid rgba(255,255,255,0.1); padding:4px 10px; border-radius:3px; transition:color 0.2s, border-color 0.2s, background 0.2s;" onmouseover="this.style.color='rgba(123,97,255,0.9)';this.style.borderColor='rgba(123,97,255,0.4)';this.style.background='rgba(123,97,255,0.07)'" onmouseout="this.style.color='rgba(255,255,255,0.3)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.background='transparent'">← Ecosystem 2</a>
   </div>
 
 </div>
 
 <script>
+// ── Launcher ─────────────────────────────────────────────────────────────
+function openApp(endpoint) {
+  fetch('http://localhost:5000/' + endpoint)
+    .catch(() => {
+      console.warn('Flask launcher nie odpowiada — uruchom launcher_toolstack.py');
+    });
+}
+
 // ── STARS ──────────────────────────────────────────────────────────────
 const canvas = document.getElementById('stars');
 const ctx = canvas.getContext('2d');
@@ -439,6 +470,7 @@ const apps = [
     sub: 'AI · Sonnet 4.6',
     tag: 'AI',
     url: 'https://claude.ai',
+    endpoint: 'open/claude',
     cat: 'ai',
     accent: '#7B61FF',
     glowColor: 'rgba(123,97,255,0.4)',
@@ -454,6 +486,7 @@ const apps = [
     sub: 'Wizualizacja AI',
     tag: 'AI',
     url: 'https://claude.ai',
+    endpoint: 'open/claude-design',
     cat: 'ai',
     accent: '#A78BFA',
     glowColor: 'rgba(167,139,250,0.4)',
@@ -470,6 +503,7 @@ const apps = [
     sub: 'Generowanie wideo',
     tag: 'AI',
     url: 'https://higgsfield.ai',
+    endpoint: 'open/higgsfield',
     cat: 'ai',
     accent: '#00D4AA',
     glowColor: 'rgba(0,212,170,0.4)',
@@ -484,7 +518,8 @@ const apps = [
     name: 'Notion',
     sub: 'Baza wiedzy',
     tag: 'PROD',
-    url: 'https://notion.so',
+    url: null,
+    endpoint: 'open/notion',
     cat: 'prod',
     accent: '#DDDDDD',
     glowColor: 'rgba(220,220,220,0.3)',
@@ -500,6 +535,7 @@ const apps = [
     sub: 'Chmura · pliki',
     tag: 'PROD',
     url: 'https://drive.google.com',
+    endpoint: 'open/gdrive',
     cat: 'prod',
     accent: '#4A90E2',
     glowColor: 'rgba(74,144,226,0.4)',
@@ -516,6 +552,7 @@ const apps = [
     sub: 'Nagrywanie · live',
     tag: 'VIDEO',
     url: null,
+    endpoint: 'open/obs',
     cat: 'video',
     accent: '#E03030',
     glowColor: 'rgba(224,48,48,0.4)',
@@ -533,6 +570,7 @@ const apps = [
     sub: 'Montaż wideo',
     tag: 'VIDEO',
     url: null,
+    endpoint: 'open/davinci',
     cat: 'video',
     accent: '#FF7B35',
     glowColor: 'rgba(255,123,53,0.4)',
@@ -587,7 +625,7 @@ function renderNodes(layout) {
     node.style.setProperty('--glow-color', app.glowColor);
     node.style.setProperty('--accent-color', app.accent);
 
-    const tipText = app.url ? 'Otwórz →' : 'Aplikacja lokalna';
+    const tipText = app.endpoint ? (app.url ? 'Otwórz w przeglądarce →' : 'Uruchom aplikację →') : 'Brak endpointu';
 
     node.innerHTML = `
       <div class="node-tip">${tipText}</div>
@@ -604,12 +642,12 @@ function renderNodes(layout) {
       ripple.className = 'ripple-el';
       ripple.style.color = app.accent;
       ripple.style.left = '50%';
-      ripple.style.top  = '38px'; // icon center-ish
+      ripple.style.top  = '38px';
       node.querySelector('.node-icon').appendChild(ripple);
       setTimeout(() => ripple.remove(), 700);
 
-      if (app.url) {
-        window.open(app.url, '_blank');
+      if (app.endpoint) {
+        openApp(app.endpoint);
       }
     });
 

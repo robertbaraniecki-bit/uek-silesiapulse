@@ -486,7 +486,10 @@ body::before {
     </div>
     <div class="header-right">
       <div class="session-badge">Live · sesja robocza</div>
-      <a class="back-link" onclick="history.back()">← wróć</a>
+      <div style="display:flex; gap:.9rem; align-items:center;">
+        <a class="back-link" onclick="history.back()">← wróć</a>
+        <a class="back-link" href="ecosystem_tools.html" style="color:var(--amber); border:1px solid var(--amber-d); padding:.15rem .5rem; border-radius:2px; transition:background .2s, color .2s;" onmouseover="this.style.background='rgba(245,158,11,.08)'" onmouseout="this.style.background='transparent'">Tool Stack →</a>
+      </div>
     </div>
   </div>
 

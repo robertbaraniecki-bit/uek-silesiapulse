@@ -1,0 +1,146 @@
+RAPORT REORGANIZACJI — SilesiaPulse · 30.05.2026
+=================================================
+Wykonano przez: Nexus (Claude Sonnet 4.6) · Cowork mode
+Folder roboczy: SILESIA PULSE - NEW ORDER\
+Data: 30.05.2026
+
+
+SEKCJA 1 — WYKONANE AKCJE:
+---------------------------
+
+[ZMIANA NAZWY FOLDERU]  docs\AKTUALNE INSTRUKCJE\ → docs\aktualne\
+[ZMIANA NAZWY FOLDERU]  docs\instrukcje\ → docs\fazowe\
+[USUNIĘCIE — NIEUDANE]  docs\aktualne\Nowy Obraz — mapa bitowa.bmp · patrz SEKCJA 3
+[NOWY FOLDER]           excel\assets\
+[PRZENIESIENIE]         excel\układy.jpg → excel\assets\układy.jpg
+[NOWY FOLDER]           excel\vba\
+[NOWY PLIK]             excel\vba\README.txt · powód: brak SilesiaPulse_Makra.bas
+[NOWY FOLDER]           powerbi\screenshots\
+[PRZENIESIENIE]         powerbi\page-1-ryzyko-kpi.png → powerbi\screenshots\page-1-ryzyko-kpi.png
+[PRZENIESIENIE]         powerbi\page-2-korelacje-ai.png → powerbi\screenshots\page-2-korelacje-ai.png
+[NOWY FOLDER]           powerbi\docs\
+[PRZENIESIENIE]         powerbi\SilesiaPulse_PowerBI_AI_Chat_Raport.docx → powerbi\docs\
+[PRZENIESIENIE]         powerbi\SilesiaPulse_PowerBI_AI_Chat_Raport_v1.1.docx → powerbi\docs\
+[PRZENIESIENIE]         powerbi\SilesiaPulse_UX_Podrecznik_v1.0.docx → powerbi\docs\
+[NOWY FOLDER]           powerbi\html\
+[PRZENIESIENIE+RENAME]  powerbi\SilesiaPulse Dashboard.html → powerbi\html\SilesiaPulse_Dashboard.html · spacja → podkreślnik
+[NOWY FOLDER]           powerbi\dashboards\
+[NOWY PLIK]             powerbi\dashboards\README.txt · zarezerwowany na Phase 5 (.pbip/.pbix od 01.06.2026)
+[PRZENIESIENIE+NADPISANIE]  prezentacja\ecosystem2.html → prezentacja\arch\ecosystem2.html
+    · root (May27 16:02) był nowszy niż arch\ (May26 12:54) — nowsza wersja zachowana w arch\
+[PRZENIESIENIE+NADPISANIE]  prezentacja\ecosystem_tools.html → prezentacja\arch\ecosystem_tools.html
+    · root (May27 16:24) był nowszy niż arch\ (May27 15:58) — nowsza wersja zachowana w arch\
+[PRZENIESIENIE+NADPISANIE]  prezentacja\gazeta.html → prezentacja\frontend\gazeta.html
+    · root (May23 14:38) był nowszy niż frontend\ (May21 20:21) — nowsza wersja zachowana w frontend\
+[PRZENIESIENIE+NADPISANIE]  prezentacja\index.html → prezentacja\frontend\index.html
+    · root (May23 14:51) był nowszy niż frontend\ (May21 20:23) — nowsza wersja zachowana w frontend\
+[NOWY FOLDER]           prezentacja\docs\
+[PRZENIESIENIE]         prezentacja\SilesiaPulse_Pipeline_Dokumentacja.docx → prezentacja\docs\
+[PRZENIESIENIE]         prezentacja\SilesiaPulse_Rozdzial9_Przepływ.docx → prezentacja\docs\
+[PRZENIESIENIE]         prezentacja\SilesiaPulse_Storytelling_Pipeline_28.05.2026.docx → prezentacja\docs\
+[PRZENIESIENIE]         prezentacja\axis_ecosystem_silesiapulse.svg → prezentacja\frontend\
+[NOWY FOLDER]           python\archiwum\
+[PRZENIESIENIE]         python\silesiapulse_ai_old.py → python\archiwum\silesiapulse_ai_old.py
+    · stara wersja skryptu AI — przeniesiona do archiwum zgodnie z KROK 2
+
+
+SEKCJA 2 — POMINIĘTE (z powodem):
+-----------------------------------
+
+[POMINIĘTO]  python\silesiapulse_ai.py · plik chroniony (hardcoded w makrze VBA)
+[POMINIĘTO]  python\launcher.py · plik chroniony (hardcoded w start_silesiapulse.bat)
+[POMINIĘTO]  python\pobierz_dane.py · plik chroniony (referencja w dokumentacji fazowej)
+[POMINIĘTO]  python\launcher_toolstack.py · plik chroniony (potencjalna referencja)
+[POMINIĘTO]  excel\UEK_Baraniecki_2026.xlsm · plik chroniony (formalna nazwa pracy dyplomowej UEK)
+[POMINIĘTO]  start_silesiapulse.bat (korzeń) · plik chroniony (launcher produkcyjny)
+[POMINIĘTO]  README.md (korzeń) · standard GitHub
+[POMINIĘTO]  repo.md (korzeń) · standard AXIS v0.3
+[POMINIĘTO]  .gitignore (korzeń) · konfiguracja Git
+[POMINIĘTO]  data\* (wszystkie pliki) · nazwy CSV hardcoded w Power Query M
+[POMINIĘTO]  docs\COWORK_KONSOLIDACJA_30.05.2026.txt · zostaje w docs\ zgodnie z AKCJĄ D4
+[POMINIĘTO]  python\pobierz_nbp.py · plik nieujęty w instrukcji, brak w liście chronionych — zostawiony na miejscu
+[POMINIĘTO]  prezentacja\SilesiaPulse_F1_F2_F3 OSTAT.mp4 · plik nieujęty w instrukcji — zostawiony na miejscu
+[POMINIĘTO]  prezentacja\arch\ecosystem_tools_st.html · plik nieujęty w instrukcji — zostawiony na miejscu
+[POMINIĘTO]  python\start_silesiapulse.bat — plik NIE ISTNIEJE w python\ · akcja PY1 niewymagana
+[POMINIĘTO]  excel\SilesiaPulse_Makra.bas — plik NIE ISTNIEJE · zamiast tego utworzono excel\vba\README.txt
+
+
+SEKCJA 3 — OSTRZEŻENIA:
+------------------------
+
+[OSTRZEŻENIE — WYMAGA DZIAŁANIA RĘCZNEGO]
+  Plik: docs\aktualne\Nowy Obraz — mapa bitowa.bmp (0 KB)
+  Operacja usunięcia nie powiodła się — filesystem (bindfs/OneDrive) blokuje rm z poziomu sandbox.
+  Operacja mv działała poprawnie, ale rm/unlink zwraca "Operation not permitted".
+  AKCJA MANUALNA: Usuń plik ręcznie z poziomu Windows Explorer lub PowerShell:
+    Remove-Item "...\docs\aktualne\Nowy Obraz — mapa bitowa.bmp"
+  Plik jest pusty (0KB) i nie ma wpływu na działanie projektu.
+
+[INFORMACJA]
+  prezentacja\arch\ecosystem_tools_st.html — plik dodatkowy nieujęty w masterprompt.
+  Zostawiony bez zmian.
+
+[INFORMACJA]
+  python\pobierz_nbp.py — plik nieujęty w instrukcji, nie jest na liście chronionych
+  ani na liście do przeniesienia. Zostawiony na miejscu.
+
+[INFORMACJA]
+  Pliki w docs\kontekst\ i docs\storytelling\ są puste (foldery bez zawartości).
+  To stan z oryginalnego repo — nic nie zostało utracone.
+
+
+SEKCJA 4 — STRUKTURA WYNIKOWA (tylko foldery):
+------------------------------------------------
+
+SILESIA PULSE - NEW ORDER\
+├── data\
+├── docs\
+│   ├── aktualne\          ← przemianowany z "AKTUALNE INSTRUKCJE"
+│   ├── fazowe\            ← przemianowany z "instrukcje"
+│   ├── kontekst\
+│   └── storytelling\
+├── excel\
+│   ├── assets\            ← NOWY
+│   └── vba\               ← NOWY
+├── powerbi\
+│   ├── dashboards\        ← NOWY (Phase 5)
+│   ├── docs\              ← NOWY
+│   ├── html\              ← NOWY
+│   └── screenshots\       ← NOWY
+├── prezentacja\
+│   ├── arch\
+│   ├── docs\              ← NOWY
+│   └── frontend\
+└── python\
+    └── archiwum\          ← NOWY
+
+
+SEKCJA 5 — WERYFIKACJA KRYTYCZNA:
+-----------------------------------
+
+[OK]   python\silesiapulse_ai.py
+[OK]   python\launcher.py
+[OK]   python\pobierz_dane.py
+[OK]   python\launcher_toolstack.py
+[OK]   excel\UEK_Baraniecki_2026.xlsm
+[OK]   start_silesiapulse.bat (korzeń)
+[OK]   data\jsw_d.csv
+[OK]   data\kghm_d.csv
+[OK]   data\nbp_eur_2020_2026.csv
+[OK]   data\nbp_usd_2020_2026.csv
+[OK]   data\pkn_d.csv
+[OK]   data\wig20_d.csv
+[OK]   .gitignore (korzeń)
+[OK]   README.md (korzeń)
+[OK]   repo.md (korzeń)
+[OK]   powerbi\dashboards\ ISTNIEJE
+[OK]   powerbi\screenshots\ ISTNIEJE i zawiera PNG
+[OK]   powerbi\docs\ ISTNIEJE i zawiera DOCX
+[OK]   powerbi\html\ ISTNIEJE i zawiera HTML
+[OK]   docs\aktualne\ ISTNIEJE z zawartością
+[OK]   docs\fazowe\ ISTNIEJE z zawartością
+[WARN] docs\aktualne\Nowy Obraz — mapa bitowa.bmp NADAL ISTNIEJE · wymaga ręcznego usunięcia
+
+=================================================
+Reorganizacja wykonana przez Nexus (Claude Sonnet 4.6) · Cowork · 30.05.2026
+=================================================
