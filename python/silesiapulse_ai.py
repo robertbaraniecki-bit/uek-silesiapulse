@@ -7,14 +7,14 @@
 #   Power BI       = warstwa wizualizacyjna (odczyt gotowych danych)
 #
 # WYWOŁANIE:
-#   Z VBA przez: Shell "python geopulse_ai.py"
+#   Z VBA przez: Shell "python silesiapulse_ai.py"
 #   lub: xlwings RunPython (zależnie od konfiguracji po zajęciach dr Kaczmarzyka)
 #
 # LOGIKA:
-#   1. Czyta DAYS_BACK z arkusza Config (sterowane suwakiem w Excelu)
+#   1. Czyta DAYS_BACK oraz TYP_INWESTORA z arkusza Config
 #   2. Pobiera ostatnie N wierszy z qry_MASTER
 #   3. Agreguje dane (średnie, trendy, min/max)
-#   4. Wysyła zagregowane dane do Claude API
+#   4. Wysyła zagregowane dane do Claude API (prompt dostosowany do typu inwestora)
 #   5. Zapisuje komentarz dzienny do kolumny Komentarz_AI (przyrostowo)
 #   6. Zapisuje komentarz zbiorczy do arkusza AI_Summary
 # =============================================================================
@@ -25,6 +25,94 @@ import xlwings as xw
 import anthropic
 import pandas as pd
 from datetime import datetime, timedelta
+
+# =============================================================================
+# SŁOWNIKI PROMPTÓW — wg typu inwestora
+# =============================================================================
+
+PROMPT_ZBIORCZY = {
+    'ostrożny': """Jesteś analitykiem ryzyka geopolitycznego specjalizującym się w gospodarce regionu Śląska (Polska).
+Piszesz dla inwestora ostrożnego — priorytetem jest ochrona kapitału, unikanie strat i sygnały ostrzegawcze.
+
+Przeanalizuj poniższe zagregowane dane finansowe i geopolityczne dla okresu {okres}:
+
+RYZYKO GEOPOLITYCZNE:
+- GPR Global (indeks Caldara-Iacoviello): średnia {gpr_srednia}, min {gpr_min}, max {gpr_max}, trend {gpr_trend:+.2f} pkt
+- GPRC_POL (udział medialny Polski w globalnym GPR, skala 0–1): średnia {gprc_pol_srednia:.4f}
+- Norma historyczna GPR: 100–150 pkt. Wartości powyżej 200 oznaczają podwyższone ryzyko.
+
+RYNKI FINANSOWE:
+- VIX (indeks strachu): średnia {vix_srednia}, max {vix_max}
+- USD/PLN: średnia {usd_pln_srednia}, zmiana {usd_pln_trend:+.4f}
+- EUR/PLN: średnia {eur_pln_srednia}
+
+SPÓŁKI ŚLĄSKIE I WIG20:
+- WIG20: średnia {wig20_srednia}, trend {wig20_trend:+.2f} pkt
+- JSW: średnia {jsw_srednia}, trend {jsw_trend:+.2f} PLN
+- KGHM: średnia {kghm_srednia}, trend {kghm_trend:+.2f} PLN
+- PKN Orlen: średnia {pkn_srednia}, trend {pkn_trend:+.2f} PLN
+
+Napisz zwięzły komentarz analityczny (max 150 słów) który:
+1. Ocenia poziom ryzyka geopolitycznego — ze szczególnym uwzględnieniem sygnałów ostrzegawczych
+2. Wskazuje zagrożenia dla kapitału w tym okresie
+3. Wymienia spółki śląskie które zachowywały się najgorzej lub najniestabilniej
+4. Formułuje rekomendację ochronną dla inwestora konserwatywnego (np. redukcja ekspozycji, czekanie)
+
+Pisz po polsku, konkretnie, bez zbędnych wstępów. Bez formatowania markdown, bez gwiazdek, bez nagłówków — tylko czysty tekst z podziałem na akapity.""",
+
+    'aktywny': """Jesteś analitykiem ryzyka geopolitycznego specjalizującym się w gospodarce regionu Śląska (Polska).
+Piszesz dla inwestora aktywnego — szuka okazji rynkowych, akceptuje wyższe ryzyko, interesuje go momentum i potencjał wzrostu.
+
+Przeanalizuj poniższe zagregowane dane finansowe i geopolityczne dla okresu {okres}:
+
+RYZYKO GEOPOLITYCZNE:
+- GPR Global (indeks Caldara-Iacoviello): średnia {gpr_srednia}, min {gpr_min}, max {gpr_max}, trend {gpr_trend:+.2f} pkt
+- GPRC_POL (udział medialny Polski w globalnym GPR, skala 0–1): średnia {gprc_pol_srednia:.4f}
+- Norma historyczna GPR: 100–150 pkt. Wartości powyżej 200 oznaczają podwyższone ryzyko.
+
+RYNKI FINANSOWE:
+- VIX (indeks strachu): średnia {vix_srednia}, max {vix_max}
+- USD/PLN: średnia {usd_pln_srednia}, zmiana {usd_pln_trend:+.4f}
+- EUR/PLN: średnia {eur_pln_srednia}
+
+SPÓŁKI ŚLĄSKIE I WIG20:
+- WIG20: średnia {wig20_srednia}, trend {wig20_trend:+.2f} pkt
+- JSW: średnia {jsw_srednia}, trend {jsw_trend:+.2f} PLN
+- KGHM: średnia {kghm_srednia}, trend {kghm_trend:+.2f} PLN
+- PKN Orlen: średnia {pkn_srednia}, trend {pkn_trend:+.2f} PLN
+
+Napisz zwięzły komentarz analityczny (max 150 słów) który:
+1. Ocenia poziom ryzyka geopolitycznego — ze szczególnym uwzględnieniem okazji rynkowych jakie generuje
+2. Wskazuje które spółki śląskie mogą skorzystać na bieżącej sytuacji
+3. Opisuje momentum — które walory mają najsilniejszy pozytywny trend
+4. Formułuje rekomendację aktywną dla inwestora nastawionego na zysk (np. zwiększenie pozycji, obserwacja konkretnych spółek)
+
+Pisz po polsku, konkretnie, bez zbędnych wstępów. Bez formatowania markdown, bez gwiazdek, bez nagłówków — tylko czysty tekst z podziałem na akapity."""
+}
+
+PROMPT_DZIENNY = {
+    'ostrożny': """Jesteś analitykiem ryzyka geopolitycznego. Data analizy: {data}.
+Piszesz dla inwestora ostrożnego — priorytet: ochrona kapitału, sygnały ostrzegawcze.
+
+Dane dzienne:
+GPR Global: {gpr:.1f} | GPRC_POL: {gprc_pol:.4f}
+VIX: {vix:.2f} | USD/PLN: {usd_pln:.4f} | EUR/PLN: {eur_pln:.4f}
+WIG20: {wig20:.1f} | JSW: {jsw:.2f} | KGHM: {kghm:.2f} | PKN: {pkn:.2f}
+
+Napisz dokładnie 2 zdania komentarza — skup się na zagrożeniach i sygnałach ostrzegawczych dla regionalnego inwestora śląskiego.
+Zasady: bez tytułów, bez nagłówków, bez formatowania markdown, bez gwiazdek. Tylko czysty tekst. Maksymalnie 50 słów łącznie. Po polsku.""",
+
+    'aktywny': """Jesteś analitykiem ryzyka geopolitycznego. Data analizy: {data}.
+Piszesz dla inwestora aktywnego — priorytet: okazje rynkowe, momentum, potencjał wzrostu.
+
+Dane dzienne:
+GPR Global: {gpr:.1f} | GPRC_POL: {gprc_pol:.4f}
+VIX: {vix:.2f} | USD/PLN: {usd_pln:.4f} | EUR/PLN: {eur_pln:.4f}
+WIG20: {wig20:.1f} | JSW: {jsw:.2f} | KGHM: {kghm:.2f} | PKN: {pkn:.2f}
+
+Napisz dokładnie 2 zdania komentarza — skup się na okazjach i potencjale wzrostu dla regionalnego inwestora śląskiego.
+Zasady: bez tytułów, bez nagłówków, bez formatowania markdown, bez gwiazdek. Tylko czysty tekst. Maksymalnie 50 słów łącznie. Po polsku."""
+}
 
 # =============================================================================
 # KROK 1 — POŁĄCZENIE Z EXCELEM I ODCZYT KONFIGURACJI
@@ -39,11 +127,15 @@ def polacz_z_excelem():
 def czytaj_config(wb):
     load_dotenv()
     ws_config = wb.sheets['Config']
+    typ = ws_config.range('B6').value
+    if typ not in ('ostrożny', 'aktywny'):
+        typ = 'ostrożny'
     config = {
-        'api_key':    os.getenv("ANTHROPIC_API_KEY") or ws_config.range('B1').value,
-        'model':      ws_config.range('B2').value,
-        'max_tokens': int(ws_config.range('B3').value),
-        'days_back':  int(ws_config.range('B4').value)
+        'api_key':        os.getenv("ANTHROPIC_API_KEY") or ws_config.range('B1').value,
+        'model':          ws_config.range('B2').value,
+        'max_tokens':     int(ws_config.range('B3').value),
+        'days_back':      int(ws_config.range('B4').value),
+        'typ_inwestora':  typ
     }
     return config
 
@@ -74,7 +166,7 @@ def agreguj_dane(df_okno):
     data_do = df_okno['Data'].max().strftime('%Y-%m-%d')
     liczba_dni = len(df_okno)
     agregat = {
-        'okres': f"{data_od} do {data_do} ({liczba_dni} dni roboczych)",
+        'okres':            f"{data_od} do {data_do} ({liczba_dni} dni roboczych)",
         'gpr_srednia':      round(df_okno['GPR'].mean(), 2),
         'gpr_min':          round(df_okno['GPR'].min(), 2),
         'gpr_max':          round(df_okno['GPR'].max(), 2),
@@ -100,48 +192,22 @@ def agreguj_dane(df_okno):
 # KROK 4 — BUDOWA PROMPTÓW
 # =============================================================================
 
-def buduj_prompt_zbiorczy(agregat):
-    prompt = f"""Jesteś analitykiem ryzyka geopolitycznego specjalizującym się w gospodarce regionu Śląska (Polska).
+def buduj_prompt_zbiorczy(agregat, typ_inwestora):
+    return PROMPT_ZBIORCZY[typ_inwestora].format(**agregat)
 
-Przeanalizuj poniższe zagregowane dane finansowe i geopolityczne dla okresu {agregat['okres']}:
-
-RYZYKO GEOPOLITYCZNE:
-- GPR Global (indeks Caldara-Iacoviello): średnia {agregat['gpr_srednia']}, min {agregat['gpr_min']}, max {agregat['gpr_max']}, trend {agregat['gpr_trend']:+.2f} pkt
-- GPRC_POL (udział medialny Polski w globalnym GPR, skala 0–1): średnia {agregat['gprc_pol_srednia']:.4f}
-- Norma historyczna GPR: 100–150 pkt. Wartości powyżej 200 oznaczają podwyższone ryzyko.
-
-RYNKI FINANSOWE:
-- VIX (indeks strachu): średnia {agregat['vix_srednia']}, max {agregat['vix_max']}
-- USD/PLN: średnia {agregat['usd_pln_srednia']}, zmiana {agregat['usd_pln_trend']:+.4f}
-- EUR/PLN: średnia {agregat['eur_pln_srednia']}
-
-SPÓŁKI ŚLĄSKIE I WIG20:
-- WIG20: średnia {agregat['wig20_srednia']}, trend {agregat['wig20_trend']:+.2f} pkt
-- JSW: średnia {agregat['jsw_srednia']}, trend {agregat['jsw_trend']:+.2f} PLN
-- KGHM: średnia {agregat['kghm_srednia']}, trend {agregat['kghm_trend']:+.2f} PLN
-- PKN Orlen: średnia {agregat['pkn_srednia']}, trend {agregat['pkn_trend']:+.2f} PLN
-
-Napisz zwięzły komentarz analityczny (max 150 słów) który:
-1. Ocenia poziom ryzyka geopolitycznego w tym okresie
-2. Opisuje czy i jak ryzyko geopolityczne przełożyło się na rynki finansowe
-3. Wskazuje które spółki śląskie zareagowały najmocniej
-4. Formułuje krótką rekomendację dla regionalnego inwestora
-
-Pisz po polsku, konkretnie, bez zbędnych wstępów. Bez formatowania markdown, bez gwiazdek, bez nagłówków — tylko czysty tekst z podziałem na akapity."""
-    return prompt
-
-def buduj_prompt_dzienny(wiersz):
-    prompt = f"""Jesteś analitykiem ryzyka geopolitycznego. Data analizy: {wiersz['Data'].strftime('%Y-%m-%d')}.
-
-Dane dzienne:
-GPR Global: {wiersz['GPR']:.1f} | GPRC_POL (udział medialny PL): {wiersz['GPRC_POL']:.4f}
-VIX: {wiersz['VIX']:.2f} | USD/PLN: {wiersz['USD_PLN']:.4f} | EUR/PLN: {wiersz['EUR_PLN']:.4f}
-WIG20: {wiersz['WIG20']:.1f} | JSW: {wiersz['JSW']:.2f} | KGHM: {wiersz['KGHM']:.2f} | PKN: {wiersz['PKN']:.2f}
-
-Napisz dokładnie 2 zdania komentarza dla regionalnego inwestora śląskiego.
-Zasady: bez tytułów, bez nagłówków, bez formatowania markdown, bez gwiazdek.
-Tylko czysty tekst. Maksymalnie 50 słów łącznie. Po polsku."""
-    return prompt
+def buduj_prompt_dzienny(wiersz, typ_inwestora):
+    return PROMPT_DZIENNY[typ_inwestora].format(
+        data=wiersz['Data'].strftime('%Y-%m-%d'),
+        gpr=wiersz['GPR'],
+        gprc_pol=wiersz['GPRC_POL'],
+        vix=wiersz['VIX'],
+        usd_pln=wiersz['USD_PLN'],
+        eur_pln=wiersz['EUR_PLN'],
+        wig20=wiersz['WIG20'],
+        jsw=wiersz['JSW'],
+        kghm=wiersz['KGHM'],
+        pkn=wiersz['PKN']
+    )
 
 # =============================================================================
 # KROK 5 — WYWOŁANIE CLAUDE API
@@ -186,7 +252,7 @@ def zapisz_komentarze_dzienne(wb, df, df_okno, config):
             continue
         wiersze_do_przetworzenia += 1
         try:
-            prompt = buduj_prompt_dzienny(row)
+            prompt = buduj_prompt_dzienny(row, config['typ_inwestora'])
             komentarz = wywolaj_claude(prompt, config)
             ws_master.range((excel_row, col_letter_offset)).value = komentarz
             wiersze_przetworzone += 1
@@ -214,7 +280,7 @@ def generuj_komentarz_ai():
 
         # Krok 2 — konfiguracja
         config = czytaj_config(wb)
-        print(f"✅ Konfiguracja: model={config['model']}, days_back={config['days_back']}")
+        print(f"✅ Konfiguracja: model={config['model']}, days_back={config['days_back']}, typ_inwestora={config['typ_inwestora']}")
 
         # Krok 3 — dane
         df_pelny, df_okno = pobierz_dane_master(wb, config['days_back'])
@@ -227,7 +293,7 @@ def generuj_komentarz_ai():
         # Krok 4 — komentarz zbiorczy
         print("\n→ Generowanie komentarza zbiorczego...")
         agregat = agreguj_dane(df_okno)
-        prompt_zbiorczy = buduj_prompt_zbiorczy(agregat)
+        prompt_zbiorczy = buduj_prompt_zbiorczy(agregat, config['typ_inwestora'])
         komentarz_zbiorczy = wywolaj_claude(prompt_zbiorczy, config)
         zapisz_komentarz_zbiorczy(wb, komentarz_zbiorczy, agregat)
 
@@ -235,7 +301,7 @@ def generuj_komentarz_ai():
         print("\n→ Generowanie komentarzy dziennych (przyrostowo)...")
         wiersze_przetworzone = zapisz_komentarze_dzienne(wb, df_pelny, df_okno, config)
 
-        # Krok 6 — aktualizacja Panelu (rzeczywiste liczby, nie zakodowane na sztywno)
+        # Krok 6 — aktualizacja Panelu
         panel = wb.sheets["Panel"]
         panel["C15"].value = datetime.now().strftime("%Y-%m-%d %H:%M")
         panel["C16"].value = f"{len(df_okno)} (ostatnie {config['days_back']} dni)"
