@@ -41,6 +41,10 @@ SPOLKI_YFINANCE = {
     "JSW.WA": "jsw_d.csv",
 }
 
+AI_GPR_URL_DAILY   = "https://www.matteoiacoviello.com/ai_gpr_files/ai_gpr_data_daily.csv"
+AI_GPR_URL_COUNTRY = "https://www.matteoiacoviello.com/ai_gpr_files/ai_gpr_country_monthly.csv"
+AI_GPR_MA_OKNO     = 7   # dni — 7-dniowa średnia krocząca dla GPR_AI
+
 # =============================================================================
 # MODUŁ 1 — NBP (USD/PLN, EUR/PLN)
 # =============================================================================
@@ -179,6 +183,84 @@ def pobierz_wig20():
         return 1
 
 # =============================================================================
+# MODUŁ 4 — AI-GPR Index (Iacoviello & Tong, 2026)
+# =============================================================================
+
+def pobierz_ai_gpr():
+    print("\n" + "=" * 50)
+    print("MODUŁ 4 — AI-GPR Index (matteoiacoviello.com)")
+    print("=" * 50)
+
+    bledy = 0
+    headers = {'User-Agent': 'Mozilla/5.0'}
+
+    # --- 4A: Dzienny GPR_AI → 7-dniowa MA → ai_gpr_daily.csv ---
+    print("\nPobieram AI-GPR daily (GPR_AI + 7d MA)...")
+    try:
+        req = urllib.request.Request(AI_GPR_URL_DAILY, headers=headers)
+        with urllib.request.urlopen(req) as r:
+            zawartosc = r.read().decode('utf-8')
+
+        from io import StringIO
+        df_daily = pd.read_csv(StringIO(zawartosc), parse_dates=['Date'])
+
+        # Filtruj do zakresu projektu
+        df_daily = df_daily[df_daily['Date'] >= DATA_OD][['Date', 'GPR_AI']].copy()
+        df_daily = df_daily.sort_values('Date').reset_index(drop=True)
+
+        # 7-dniowa średnia krocząca (min_periods=1 — brak NaN na początku)
+        df_daily['GPR'] = df_daily['GPR_AI'].rolling(
+            window=AI_GPR_MA_OKNO, min_periods=1
+        ).mean().round(2)
+
+        # Zapis: Data + GPR (tylko MA, surowy GPR_AI odpada)
+        df_out = df_daily[['Date', 'GPR']].copy()
+        df_out.rename(columns={'Date': 'Data'}, inplace=True)
+        df_out['Data'] = df_out['Data'].dt.strftime('%Y-%m-%d')
+
+        sciezka = os.path.join(FOLDER_CSV, "ai_gpr_daily.csv")
+        df_out.to_csv(sciezka, index=False, encoding='utf-8-sig')
+
+        print(f"  ✅ Zapisano {len(df_out)} wierszy → ai_gpr_daily.csv")
+        print(f"  📅 Zakres: {df_out['Data'].iloc[0]} → {df_out['Data'].iloc[-1]}")
+        print(f"  📊 GPR (7d MA): min={df_out['GPR'].min():.1f}  max={df_out['GPR'].max():.1f}  ostatni={df_out['GPR'].iloc[-1]:.1f}")
+
+    except Exception as e:
+        print(f"  ❌ Błąd AI-GPR daily: {e}")
+        bledy += 1
+
+    # --- 4B: Miesięczny Poland_all → ai_gpr_poland_monthly.csv ---
+    print("\nPobieram AI-GPR country monthly (Poland_all → GPRC_POL)...")
+    try:
+        req = urllib.request.Request(AI_GPR_URL_COUNTRY, headers=headers)
+        with urllib.request.urlopen(req) as r:
+            zawartosc = r.read().decode('utf-8')
+
+        df_country = pd.read_csv(StringIO(zawartosc), parse_dates=['Date'])
+
+        if 'Poland_all' not in df_country.columns:
+            print("  ❌ Błąd — kolumna 'Poland_all' nie znaleziona w pliku country")
+            bledy += 1
+        else:
+            df_country = df_country[df_country['Date'] >= DATA_OD][['Date', 'Poland_all']].copy()
+            df_country = df_country.sort_values('Date').reset_index(drop=True)
+            df_country.rename(columns={'Date': 'Data', 'Poland_all': 'GPRC_POL'}, inplace=True)
+            df_country['Data'] = df_country['Data'].dt.strftime('%Y-%m-%d')
+            df_country['GPRC_POL'] = df_country['GPRC_POL'].round(4)
+
+            sciezka = os.path.join(FOLDER_CSV, "ai_gpr_poland_monthly.csv")
+            df_country.to_csv(sciezka, index=False, encoding='utf-8-sig')
+
+            print(f"  ✅ Zapisano {len(df_country)} wierszy → ai_gpr_poland_monthly.csv")
+            print(f"  📅 Zakres: {df_country['Data'].iloc[0]} → {df_country['Data'].iloc[-1]}")
+
+    except Exception as e:
+        print(f"  ❌ Błąd AI-GPR country: {e}")
+        bledy += 1
+
+    return bledy
+
+# =============================================================================
 # GŁÓWNA FUNKCJA
 # =============================================================================
 
@@ -189,11 +271,12 @@ def main():
     print(f"Zakres: {DATA_OD} → {DATA_DO}")
     print("=" * 50)
 
-    bledy_nbp = pobierz_nbp()
+    bledy_nbp    = pobierz_nbp()
     bledy_spolki = pobierz_spolki()
-    bledy_wig20 = pobierz_wig20()
+    bledy_wig20  = pobierz_wig20()
+    bledy_gpr    = pobierz_ai_gpr()
 
-    total_bledy = bledy_nbp + bledy_spolki + bledy_wig20
+    total_bledy = bledy_nbp + bledy_spolki + bledy_wig20 + bledy_gpr
 
     print("\n" + "=" * 50)
     if total_bledy == 0:

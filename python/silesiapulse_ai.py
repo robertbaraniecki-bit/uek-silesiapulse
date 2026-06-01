@@ -15,8 +15,11 @@
 #   2. Pobiera ostatnie N wierszy z qry_MASTER
 #   3. Agreguje dane (średnie, trendy, min/max)
 #   4. Wysyła zagregowane dane do Claude API (prompt dostosowany do typu inwestora)
-#   5. Zapisuje komentarz dzienny do kolumny Komentarz_AI (przyrostowo)
-#   6. Zapisuje komentarz zbiorczy do arkusza AI_Summary
+#   5. Zapisuje komentarz dzienny PRZYROSTOWO do dwóch kolumn:
+#      - Komentarz_AI_Ostrozny (kolumna K)
+#      - Komentarz_AI_Aktywny  (kolumna L)
+#      Dla każdego wiersza generuje tylko brakującą kolumnę — można przerywać i wznawiać.
+#   6. Zapisuje komentarz zbiorczy do arkusza AI_Summary (wg Config!B6)
 # =============================================================================
 
 from dotenv import load_dotenv
@@ -226,41 +229,63 @@ def wywolaj_claude(prompt, config):
 # KROK 6 — ZAPIS WYNIKÓW DO EXCELA
 # =============================================================================
 
-def zapisz_komentarz_zbiorczy(wb, komentarz, agregat):
+def zapisz_komentarz_zbiorczy(wb, komentarz, agregat, typ_inwestora):
     if 'AI_Summary' not in [s.name for s in wb.sheets]:
         wb.sheets.add('AI_Summary')
     ws_summary = wb.sheets['AI_Summary']
     ws_summary.range('A1').value = f"Wygenerowano: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
     ws_summary.range('A2').value = f"Okres: {agregat['okres']}"
-    ws_summary.range('A3').value = komentarz
-    print(f"✅ Komentarz zbiorczy zapisany do AI_Summary")
+    ws_summary.range('A3').value = f"Typ inwestora: {typ_inwestora}"
+    ws_summary.range('A4').value = komentarz
+    print(f"✅ Komentarz zbiorczy ({typ_inwestora}) zapisany do AI_Summary")
 
 def zapisz_komentarze_dzienne(wb, df, df_okno, config):
+    """
+    Generuje komentarze przyrostowo dla OBU typów inwestora.
+    Dla każdego wiersza sprawdza osobno Komentarz_AI_Ostrozny i Komentarz_AI_Aktywny.
+    Generuje tylko brakujące — można przerywać i wznawiać bez utraty postępu.
+    """
     ws_master = wb.sheets['qry_MASTER']
     naglowki = ws_master.range('A1').expand('right').value
-    if 'Komentarz_AI' not in naglowki:
-        print("⚠️ Brak kolumny Komentarz_AI w qry_MASTER")
-        return
-    idx_komentarz = naglowki.index('Komentarz_AI')
-    col_letter_offset = idx_komentarz + 1
-    wiersze_do_przetworzenia = 0
+
+    # Znajdź indeksy obu kolumn
+    if 'Komentarz_AI_Ostrozny' not in naglowki or 'Komentarz_AI_Aktywny' not in naglowki:
+        print("⚠️ Brak kolumn Komentarz_AI_Ostrozny lub Komentarz_AI_Aktywny w qry_MASTER")
+        return 0
+
+    idx_ostrozny = naglowki.index('Komentarz_AI_Ostrozny') + 1   # 1-based dla xlwings
+    idx_aktywny  = naglowki.index('Komentarz_AI_Aktywny')  + 1
+
     wiersze_przetworzone = 0
+
     for i, row in df_okno.iterrows():
-        excel_row = df.index.get_loc(i) + 2
-        istniejacy = ws_master.range((excel_row, col_letter_offset)).value
-        if istniejacy:
-            continue
-        wiersze_do_przetworzenia += 1
-        try:
-            prompt = buduj_prompt_dzienny(row, config['typ_inwestora'])
-            komentarz = wywolaj_claude(prompt, config)
-            ws_master.range((excel_row, col_letter_offset)).value = komentarz
-            wiersze_przetworzone += 1
-            print(f"✅ {row['Data'].strftime('%Y-%m-%d')} — komentarz zapisany")
-        except Exception as e:
-            print(f"⚠️ {row['Data'].strftime('%Y-%m-%d')} — błąd API: {e}")
-            continue
-    print(f"\n✅ Komentarze dzienne: {wiersze_przetworzone}/{wiersze_do_przetworzenia} wierszy")
+        excel_row = df.index.get_loc(i) + 2   # KRYTYCZNE: get_loc, nie i+2
+
+        # --- Komentarz_AI_Ostrozny ---
+        istniejacy_ostrozny = ws_master.range((excel_row, idx_ostrozny)).value
+        if not istniejacy_ostrozny:
+            try:
+                prompt = buduj_prompt_dzienny(row, 'ostrożny')
+                komentarz = wywolaj_claude(prompt, config)
+                ws_master.range((excel_row, idx_ostrozny)).value = komentarz
+                wiersze_przetworzone += 1
+                print(f"  ✅ {row['Data'].strftime('%Y-%m-%d')} [ostrożny] — OK")
+            except Exception as e:
+                print(f"  ⚠️ {row['Data'].strftime('%Y-%m-%d')} [ostrożny] — błąd: {e}")
+
+        # --- Komentarz_AI_Aktywny ---
+        istniejacy_aktywny = ws_master.range((excel_row, idx_aktywny)).value
+        if not istniejacy_aktywny:
+            try:
+                prompt = buduj_prompt_dzienny(row, 'aktywny')
+                komentarz = wywolaj_claude(prompt, config)
+                ws_master.range((excel_row, idx_aktywny)).value = komentarz
+                wiersze_przetworzone += 1
+                print(f"  ✅ {row['Data'].strftime('%Y-%m-%d')} [aktywny] — OK")
+            except Exception as e:
+                print(f"  ⚠️ {row['Data'].strftime('%Y-%m-%d')} [aktywny] — błąd: {e}")
+
+    print(f"\n✅ Komentarze dzienne: {wiersze_przetworzone} wywołań API")
     return wiersze_przetworzone
 
 # =============================================================================
@@ -290,21 +315,21 @@ def generuj_komentarz_ai():
             print("⚠️ Brak danych dla wybranego okresu")
             return
 
-        # Krok 4 — komentarz zbiorczy
-        print("\n→ Generowanie komentarza zbiorczego...")
+        # Krok 4 — komentarz zbiorczy (wg typ_inwestora z Config!B6)
+        print(f"\n→ Generowanie komentarza zbiorczego [{config['typ_inwestora']}]...")
         agregat = agreguj_dane(df_okno)
         prompt_zbiorczy = buduj_prompt_zbiorczy(agregat, config['typ_inwestora'])
         komentarz_zbiorczy = wywolaj_claude(prompt_zbiorczy, config)
-        zapisz_komentarz_zbiorczy(wb, komentarz_zbiorczy, agregat)
+        zapisz_komentarz_zbiorczy(wb, komentarz_zbiorczy, agregat, config['typ_inwestora'])
 
-        # Krok 5 — komentarze dzienne (przyrostowo)
-        print("\n→ Generowanie komentarzy dziennych (przyrostowo)...")
+        # Krok 5 — komentarze dzienne (obie kolumny, przyrostowo)
+        print("\n→ Generowanie komentarzy dziennych (obie kolumny, przyrostowo)...")
         wiersze_przetworzone = zapisz_komentarze_dzienne(wb, df_pelny, df_okno, config)
 
         # Krok 6 — aktualizacja Panelu
         panel = wb.sheets["Panel"]
         panel["C15"].value = datetime.now().strftime("%Y-%m-%d %H:%M")
-        panel["C16"].value = f"{len(df_okno)} (ostatnie {config['days_back']} dni)"
+        panel["C16"].value = f"{wiersze_przetworzone} wywołań API ({len(df_okno)} wierszy × 2 typy)"
 
         print("\n" + "=" * 50)
         print("✅ ZAKOŃCZONO POMYŚLNIE")
