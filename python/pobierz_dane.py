@@ -29,8 +29,8 @@ DATA_OD_NBP_ZAKRESY = [
     ("2026-01-01", datetime.now().strftime("%Y-%m-%d")),
 ]
 
-FOLDER_CSV = r"C:\Users\Oloros\OneDrive\Pulpit\SilesiaPulse_SEMINARIUM_28.05\data\dane_csv"
-STOOQ_KLUCZ = "Eg9CrBlcSu2kzNme7A5MsyOq0IEawQhK"
+FOLDER_CSV = r"C:\Projekty\uek-silesiapulse\data"
+STOOQ_KLUCZ = os.getenv("STOOQ_API_KEY")
 
 SPOLKI_YFINANCE = {
     "PKN.WA": "pkn_d.csv",
