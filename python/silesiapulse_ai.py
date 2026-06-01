@@ -20,6 +20,11 @@
 #      - Komentarz_AI_Aktywny  (kolumna L)
 #      Dla każdego wiersza generuje tylko brakującą kolumnę — można przerywać i wznawiać.
 #   6. Zapisuje komentarz zbiorczy do arkusza AI_Summary (wg Config!B6)
+#
+# ŹRÓDŁO GPR:
+#   AI-GPR Index (Iacoviello & Tong, 2026) — 7-dniowa średnia krocząca
+#   Dane dzienne do ~1 miesiąca wstecz. Nowsze daty: LOCF z ostatniej dostępnej wartości.
+#   Ref: https://www.matteoiacoviello.com/ai_gpr.html
 # =============================================================================
 
 from dotenv import load_dotenv
@@ -28,6 +33,23 @@ import xlwings as xw
 import anthropic
 import pandas as pd
 from datetime import datetime, timedelta
+
+# =============================================================================
+# KONTEKST HISTORYCZNY — zakresy 2020–2026 dla kalibracji AI
+# Używany w promptach aby Claude interpretował wartości w spectrum historycznym
+# =============================================================================
+
+KONTEKST_HISTORYCZNY = """
+KONTEKST HISTORYCZNY (zakres danych 2020–2026, niezbędny do interpretacji):
+- GPR Global (7d MA): norma spokojna 60–100 | podwyższone 150–200 | kryzysowe >250 | historyczne max ~413 (inwazja Ukraina 03.2022)
+- VIX: normalny <20 | podwyższony 20–30 | panika >30 | historyczne max ~83 (COVID 03.2020)
+- USD/PLN: zakres 3.50–5.04 | silny PLN <3.70 | słaby PLN >4.50
+- WIG20: dołek ~1305 (COVID 03.2020) | szczyt ~3700 (2026) | obecny poziom w górnej strefie historycznej
+- JSW: zakres 9–81 PLN | obecne poziomy 25–30 PLN to dolna strefa historyczna (bliżej dołków niż szczytów)
+- KGHM: zakres 46–380 PLN | wartości >300 PLN to górna strefa historyczna
+- PKN Orlen: zakres 27–141 PLN | obecne poziomy ~140 PLN to blisko historycznego maksimum
+- GPRC_POL: wartości >1.0 oznaczają silną obecność Polski w geopolitycznym dyskursie medialnym
+"""
 
 # =============================================================================
 # SŁOWNIKI PROMPTÓW — wg typu inwestora
@@ -40,9 +62,8 @@ Piszesz dla inwestora ostrożnego — priorytetem jest ochrona kapitału, unikan
 Przeanalizuj poniższe zagregowane dane finansowe i geopolityczne dla okresu {okres}:
 
 RYZYKO GEOPOLITYCZNE:
-- GPR Global (indeks Caldara-Iacoviello): średnia {gpr_srednia}, min {gpr_min}, max {gpr_max}, trend {gpr_trend:+.2f} pkt
-- GPRC_POL (udział medialny Polski w globalnym GPR, skala 0–1): średnia {gprc_pol_srednia:.4f}
-- Norma historyczna GPR: 100–150 pkt. Wartości powyżej 200 oznaczają podwyższone ryzyko.
+- GPR Global (AI-GPR, 7-dniowa średnia krocząca): średnia {gpr_srednia}, min {gpr_min}, max {gpr_max}, trend {gpr_trend:+.2f} pkt
+- GPRC_POL (udział Polski w globalnym GPR medialnym): średnia {gprc_pol_srednia:.4f}
 
 RYNKI FINANSOWE:
 - VIX (indeks strachu): średnia {vix_srednia}, max {vix_max}
@@ -55,10 +76,12 @@ SPÓŁKI ŚLĄSKIE I WIG20:
 - KGHM: średnia {kghm_srednia}, trend {kghm_trend:+.2f} PLN
 - PKN Orlen: średnia {pkn_srednia}, trend {pkn_trend:+.2f} PLN
 
+{kontekst_historyczny}
+
 Napisz zwięzły komentarz analityczny (max 150 słów) który:
-1. Ocenia poziom ryzyka geopolitycznego — ze szczególnym uwzględnieniem sygnałów ostrzegawczych
-2. Wskazuje zagrożenia dla kapitału w tym okresie
-3. Wymienia spółki śląskie które zachowywały się najgorzej lub najniestabilniej
+1. Ocenia poziom ryzyka geopolitycznego w odniesieniu do norm historycznych — ze szczególnym uwzględnieniem sygnałów ostrzegawczych
+2. Wskazuje zagrożenia dla kapitału z uwzględnieniem historycznego spectrum wycen spółek
+3. Wymienia spółki śląskie które zachowywały się najgorzej lub są w strefie historycznego ryzyka
 4. Formułuje rekomendację ochronną dla inwestora konserwatywnego (np. redukcja ekspozycji, czekanie)
 
 Pisz po polsku, konkretnie, bez zbędnych wstępów. Bez formatowania markdown, bez gwiazdek, bez nagłówków — tylko czysty tekst z podziałem na akapity.""",
@@ -69,9 +92,8 @@ Piszesz dla inwestora aktywnego — szuka okazji rynkowych, akceptuje wyższe ry
 Przeanalizuj poniższe zagregowane dane finansowe i geopolityczne dla okresu {okres}:
 
 RYZYKO GEOPOLITYCZNE:
-- GPR Global (indeks Caldara-Iacoviello): średnia {gpr_srednia}, min {gpr_min}, max {gpr_max}, trend {gpr_trend:+.2f} pkt
-- GPRC_POL (udział medialny Polski w globalnym GPR, skala 0–1): średnia {gprc_pol_srednia:.4f}
-- Norma historyczna GPR: 100–150 pkt. Wartości powyżej 200 oznaczają podwyższone ryzyko.
+- GPR Global (AI-GPR, 7-dniowa średnia krocząca): średnia {gpr_srednia}, min {gpr_min}, max {gpr_max}, trend {gpr_trend:+.2f} pkt
+- GPRC_POL (udział Polski w globalnym GPR medialnym): średnia {gprc_pol_srednia:.4f}
 
 RYNKI FINANSOWE:
 - VIX (indeks strachu): średnia {vix_srednia}, max {vix_max}
@@ -84,10 +106,12 @@ SPÓŁKI ŚLĄSKIE I WIG20:
 - KGHM: średnia {kghm_srednia}, trend {kghm_trend:+.2f} PLN
 - PKN Orlen: średnia {pkn_srednia}, trend {pkn_trend:+.2f} PLN
 
+{kontekst_historyczny}
+
 Napisz zwięzły komentarz analityczny (max 150 słów) który:
-1. Ocenia poziom ryzyka geopolitycznego — ze szczególnym uwzględnieniem okazji rynkowych jakie generuje
-2. Wskazuje które spółki śląskie mogą skorzystać na bieżącej sytuacji
-3. Opisuje momentum — które walory mają najsilniejszy pozytywny trend
+1. Ocenia poziom ryzyka geopolitycznego w odniesieniu do norm historycznych — ze szczególnym uwzględnieniem okazji rynkowych
+2. Wskazuje które spółki śląskie są w historycznie atrakcyjnych strefach wyceny i mogą skorzystać na sytuacji
+3. Opisuje momentum — które walory mają najsilniejszy pozytywny trend względem historii
 4. Formułuje rekomendację aktywną dla inwestora nastawionego na zysk (np. zwiększenie pozycji, obserwacja konkretnych spółek)
 
 Pisz po polsku, konkretnie, bez zbędnych wstępów. Bez formatowania markdown, bez gwiazdek, bez nagłówków — tylko czysty tekst z podziałem na akapity."""
@@ -98,23 +122,27 @@ PROMPT_DZIENNY = {
 Piszesz dla inwestora ostrożnego — priorytet: ochrona kapitału, sygnały ostrzegawcze.
 
 Dane dzienne:
-GPR Global: {gpr:.1f} | GPRC_POL: {gprc_pol:.4f}
+GPR Global (7d MA): {gpr:.1f} | GPRC_POL: {gprc_pol:.4f}
 VIX: {vix:.2f} | USD/PLN: {usd_pln:.4f} | EUR/PLN: {eur_pln:.4f}
 WIG20: {wig20:.1f} | JSW: {jsw:.2f} | KGHM: {kghm:.2f} | PKN: {pkn:.2f}
 
-Napisz dokładnie 2 zdania komentarza — skup się na zagrożeniach i sygnałach ostrzegawczych dla regionalnego inwestora śląskiego.
-Zasady: bez tytułów, bez nagłówków, bez formatowania markdown, bez gwiazdek. Tylko czysty tekst. Maksymalnie 50 słów łącznie. Po polsku.""",
+Kontekst historyczny (2020–2026): GPR norma 60–100, kryzysowe >250 | VIX normalny <20, panika >30 | JSW zakres 9–81 PLN (obecne poziomy blisko historycznych dołków) | KGHM zakres 46–380 PLN | USD/PLN zakres 3.50–5.04
+
+Napisz dokładnie 2 zdania komentarza — odnieś wartości do kontekstu historycznego, skup się na zagrożeniach dla regionalnego inwestora śląskiego.
+Zasady: bez tytułów, bez nagłówków, bez formatowania markdown, bez gwiazdek. Tylko czysty tekst. Maksymalnie 60 słów łącznie. Po polsku.""",
 
     'aktywny': """Jesteś analitykiem ryzyka geopolitycznego. Data analizy: {data}.
 Piszesz dla inwestora aktywnego — priorytet: okazje rynkowe, momentum, potencjał wzrostu.
 
 Dane dzienne:
-GPR Global: {gpr:.1f} | GPRC_POL: {gprc_pol:.4f}
+GPR Global (7d MA): {gpr:.1f} | GPRC_POL: {gprc_pol:.4f}
 VIX: {vix:.2f} | USD/PLN: {usd_pln:.4f} | EUR/PLN: {eur_pln:.4f}
 WIG20: {wig20:.1f} | JSW: {jsw:.2f} | KGHM: {kghm:.2f} | PKN: {pkn:.2f}
 
-Napisz dokładnie 2 zdania komentarza — skup się na okazjach i potencjale wzrostu dla regionalnego inwestora śląskiego.
-Zasady: bez tytułów, bez nagłówków, bez formatowania markdown, bez gwiazdek. Tylko czysty tekst. Maksymalnie 50 słów łącznie. Po polsku."""
+Kontekst historyczny (2020–2026): GPR norma 60–100, kryzysowe >250 | VIX normalny <20, panika >30 | JSW zakres 9–81 PLN (obecne poziomy blisko historycznych dołków) | KGHM zakres 46–380 PLN | USD/PLN zakres 3.50–5.04
+
+Napisz dokładnie 2 zdania komentarza — odnieś wartości do kontekstu historycznego, skup się na okazjach i potencjale wzrostu dla regionalnego inwestora śląskiego.
+Zasady: bez tytułów, bez nagłówków, bez formatowania markdown, bez gwiazdek. Tylko czysty tekst. Maksymalnie 60 słów łącznie. Po polsku."""
 }
 
 # =============================================================================
@@ -169,25 +197,26 @@ def agreguj_dane(df_okno):
     data_do = df_okno['Data'].max().strftime('%Y-%m-%d')
     liczba_dni = len(df_okno)
     agregat = {
-        'okres':            f"{data_od} do {data_do} ({liczba_dni} dni roboczych)",
-        'gpr_srednia':      round(df_okno['GPR'].mean(), 2),
-        'gpr_min':          round(df_okno['GPR'].min(), 2),
-        'gpr_max':          round(df_okno['GPR'].max(), 2),
-        'gpr_trend':        round(df_okno['GPR'].iloc[-1] - df_okno['GPR'].iloc[0], 2),
-        'gprc_pol_srednia': round(df_okno['GPRC_POL'].mean(), 4),
-        'vix_srednia':      round(df_okno['VIX'].mean(), 2),
-        'vix_max':          round(df_okno['VIX'].max(), 2),
-        'usd_pln_srednia':  round(df_okno['USD_PLN'].mean(), 4),
-        'usd_pln_trend':    round(df_okno['USD_PLN'].iloc[-1] - df_okno['USD_PLN'].iloc[0], 4),
-        'eur_pln_srednia':  round(df_okno['EUR_PLN'].mean(), 4),
-        'wig20_srednia':    round(df_okno['WIG20'].mean(), 2),
-        'wig20_trend':      round(df_okno['WIG20'].iloc[-1] - df_okno['WIG20'].iloc[0], 2),
-        'jsw_srednia':      round(df_okno['JSW'].mean(), 2),
-        'jsw_trend':        round(df_okno['JSW'].iloc[-1] - df_okno['JSW'].iloc[0], 2),
-        'kghm_srednia':     round(df_okno['KGHM'].mean(), 2),
-        'kghm_trend':       round(df_okno['KGHM'].iloc[-1] - df_okno['KGHM'].iloc[0], 2),
-        'pkn_srednia':      round(df_okno['PKN'].mean(), 2),
-        'pkn_trend':        round(df_okno['PKN'].iloc[-1] - df_okno['PKN'].iloc[0], 2),
+        'okres':               f"{data_od} do {data_do} ({liczba_dni} dni roboczych)",
+        'gpr_srednia':         round(df_okno['GPR'].mean(), 2),
+        'gpr_min':             round(df_okno['GPR'].min(), 2),
+        'gpr_max':             round(df_okno['GPR'].max(), 2),
+        'gpr_trend':           round(df_okno['GPR'].iloc[-1] - df_okno['GPR'].iloc[0], 2),
+        'gprc_pol_srednia':    round(df_okno['GPRC_POL'].mean(), 4),
+        'vix_srednia':         round(df_okno['VIX'].mean(), 2),
+        'vix_max':             round(df_okno['VIX'].max(), 2),
+        'usd_pln_srednia':     round(df_okno['USD_PLN'].mean(), 4),
+        'usd_pln_trend':       round(df_okno['USD_PLN'].iloc[-1] - df_okno['USD_PLN'].iloc[0], 4),
+        'eur_pln_srednia':     round(df_okno['EUR_PLN'].mean(), 4),
+        'wig20_srednia':       round(df_okno['WIG20'].mean(), 2),
+        'wig20_trend':         round(df_okno['WIG20'].iloc[-1] - df_okno['WIG20'].iloc[0], 2),
+        'jsw_srednia':         round(df_okno['JSW'].mean(), 2),
+        'jsw_trend':           round(df_okno['JSW'].iloc[-1] - df_okno['JSW'].iloc[0], 2),
+        'kghm_srednia':        round(df_okno['KGHM'].mean(), 2),
+        'kghm_trend':          round(df_okno['KGHM'].iloc[-1] - df_okno['KGHM'].iloc[0], 2),
+        'pkn_srednia':         round(df_okno['PKN'].mean(), 2),
+        'pkn_trend':           round(df_okno['PKN'].iloc[-1] - df_okno['PKN'].iloc[0], 2),
+        'kontekst_historyczny': KONTEKST_HISTORYCZNY,
     }
     return agregat
 
@@ -328,7 +357,7 @@ def generuj_komentarz_ai():
 
         # Krok 6 — aktualizacja Panelu
         panel = wb.sheets["Panel"]
-        panel["C15"].value = datetime.now().strftime("%Y-%m-%d %H:%M")
+        panel["C15"].value = datetime.now().strftime("%d.%m.%Y %H:%M")
         panel["C16"].value = f"{wiersze_przetworzone} wywołań API ({len(df_okno)} wierszy × 2 typy)"
 
         print("\n" + "=" * 50)
