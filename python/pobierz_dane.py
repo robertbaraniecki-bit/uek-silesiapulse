@@ -12,6 +12,9 @@ import sys
 import yfinance as yf
 import pandas as pd
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # =============================================================================
 # KONFIGURACJA
@@ -46,7 +49,7 @@ def pobierz_nbp():
     print("\n" + "=" * 50)
     print("MODUŁ 1 — NBP (kursy walut)")
     print("=" * 50)
-    
+
     bledy = 0
 
     def pobierz_walute(waluta, zakresy):
@@ -77,7 +80,7 @@ def pobierz_nbp():
             w.writerow(["Data", nazwa_col])
             w.writerows(wiersze)
         print(f"  ✅ Zapisano {len(wiersze)} wierszy → nbp_{waluta}_2020_2026.csv")
-    
+
     return bledy
 
 # =============================================================================
@@ -88,7 +91,7 @@ def pobierz_spolki():
     print("\n" + "=" * 50)
     print("MODUŁ 2 — Spółki GPW (yfinance)")
     print("=" * 50)
-    
+
     bledy = 0
 
     for ticker, plik in SPOLKI_YFINANCE.items():
@@ -124,7 +127,7 @@ def pobierz_spolki():
         except Exception as e:
             print(f"  ❌ Błąd: {e}")
             bledy += 1
-    
+
     return bledy
 
 # =============================================================================
@@ -135,6 +138,10 @@ def pobierz_wig20():
     print("\n" + "=" * 50)
     print("MODUŁ 3 — WIG20 (Stooq API)")
     print("=" * 50)
+
+    if not STOOQ_KLUCZ:
+        print("  ❌ Błąd — STOOQ_API_KEY nie wczytany z .env")
+        return 1
 
     data_od = "20200101"
     data_do = datetime.now().strftime("%Y%m%d")
