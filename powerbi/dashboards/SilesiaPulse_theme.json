@@ -1,0 +1,54 @@
+{
+  "name": "SilesiaPulse Dark",
+  "dataColors": [
+    "#FF6B6B",
+    "#4E9AF1",
+    "#FFD700",
+    "#4CAF50",
+    "#FF9800",
+    "#A78BFA",
+    "#00D4AA",
+    "#7B61FF"
+  ],
+  "background": "#1C1C2E",
+  "foreground": "#FFFFFF",
+  "tableAccent": "#7B61FF",
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": { "solid": { "color": "#252535" } }
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": { "solid": { "color": "#3A3A5C" } },
+            "radius": 8
+          }
+        ],
+        "title": [
+          {
+            "show": true,
+            "fontColor": { "solid": { "color": "#FFFFFF" } },
+            "fontSize": 14,
+            "fontFamily": "Segoe UI",
+            "bold": true
+          }
+        ]
+      }
+    },
+    "page": {
+      "*": {
+        "background": [
+          {
+            "color": { "solid": { "color": "#1C1C2E" } },
+            "transparency": 0
+          }
+        ]
+      }
+    }
+  }
+}
