@@ -2,6 +2,11 @@
 # pobierz_dane.py — SilesiaPulse / Projekt UEK 2026
 # Agent: Nexus | Robert Baraniecki | dr hab. K. Kania
 # Master skrypt pobierający wszystkie dane przed odświeżeniem Power Query
+# -----------------------------------------------------------------------------
+# 04.06.2026 — MODUŁ 5: VIX migrowany z żywego FRED (Web.Contents) na lokalny
+#              vix_d.csv (yfinance ^VIX). Powód: 504 Gateway Time-out na FRED
+#              podczas odświeżania = pojedynczy punkt awarii / ryzyko demo na
+#              obronie. Po migracji WSZYSTKIE źródła są lokalnymi CSV.
 # =============================================================================
 
 import urllib.request
@@ -261,6 +266,58 @@ def pobierz_ai_gpr():
     return bledy
 
 # =============================================================================
+# MODUŁ 5 — VIX (yfinance ^VIX → lokalny CSV)
+# -----------------------------------------------------------------------------
+# Zastępuje żywe wywołanie FRED (Web.Contents) w qry_VIX. ^VIX Close = VIXCLS.
+# UWAGA — format CSV celowo odwzorowuje strumień FRED:
+#   * kolumny: observation_date, VIXCLS  (te same nazwy co FRED)
+#   * KROPKA dziesiętna (decimal=".")     — qry_VIX ma krok ReplaceValue "."->","
+#   * BEZ BOM (encoding="utf-8")           — bliźniacze ze strumieniem Web.Contents
+# Dzięki temu istniejący qry_VIX zmienia tylko źródło (Web.Contents -> File.Contents),
+# cały łańcuch transformacji pozostaje nietknięty.
+# (To świadoma niejednorodność vs spółki, które mają separator przecinkowy.)
+# =============================================================================
+
+def pobierz_vix():
+    print("\n" + "=" * 50)
+    print("MODUŁ 5 — VIX (yfinance ^VIX)")
+    print("=" * 50)
+
+    print(f"\nPobieram ^VIX...")
+    try:
+        df = yf.download(
+            "^VIX",
+            start=DATA_OD,
+            end=DATA_DO,
+            progress=False,
+            auto_adjust=True
+        )
+
+        if df.empty:
+            print("  ❌ Brak danych dla ^VIX")
+            return 1
+
+        df = df[["Close"]].copy()
+        df.index = pd.to_datetime(df.index)
+        df.index = df.index.strftime("%Y-%m-%d")
+        df.index.name = "observation_date"     # zgodnie z formatem FRED
+        df.columns = ["VIXCLS"]                 # zgodnie z formatem FRED
+        df["VIXCLS"] = df["VIXCLS"].round(2)
+
+        sciezka = os.path.join(FOLDER_CSV, "vix_d.csv")
+        # kropka dziesiętna + brak BOM — patrz nagłówek modułu
+        df.to_csv(sciezka, sep=",", decimal=".", encoding="utf-8")
+
+        print(f"  ✅ Zapisano {len(df)} wierszy → vix_d.csv")
+        print(f"  📅 Zakres: {df.index[0]} → {df.index[-1]}")
+        print(f"  📊 VIX: min={df['VIXCLS'].min():.2f}  max={df['VIXCLS'].max():.2f}  ostatni={df['VIXCLS'].iloc[-1]:.2f}")
+        return 0
+
+    except Exception as e:
+        print(f"  ❌ Błąd: {e}")
+        return 1
+
+# =============================================================================
 # GŁÓWNA FUNKCJA
 # =============================================================================
 
@@ -275,8 +332,9 @@ def main():
     bledy_spolki = pobierz_spolki()
     bledy_wig20  = pobierz_wig20()
     bledy_gpr    = pobierz_ai_gpr()
+    bledy_vix    = pobierz_vix()
 
-    total_bledy = bledy_nbp + bledy_spolki + bledy_wig20 + bledy_gpr
+    total_bledy = bledy_nbp + bledy_spolki + bledy_wig20 + bledy_gpr + bledy_vix
 
     print("\n" + "=" * 50)
     if total_bledy == 0:
